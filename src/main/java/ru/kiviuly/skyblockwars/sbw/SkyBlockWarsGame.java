@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
@@ -20,10 +21,13 @@ import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
@@ -325,6 +329,7 @@ public class SkyBlockWarsGame extends Minigame
     {
         block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType()); // видимый «слом»: частицы + звук
         giveYield(s, p, block);
+        damageTool(p); // ломание своего блока отменяется — прочность инструмента списываем сами
         boolean advanced = advanceProgress(s, st, p);
         Epoch epoch = st.currentEpoch(p.getUniqueId());
         placeRespawnBlock(s, block.getLocation(), epoch != null ? epoch.pickRandom() : null);
@@ -456,20 +461,45 @@ public class SkyBlockWarsGame extends Minigame
         return false;
     }
 
-    /** Добыча блока ДРОПОМ у игрока (видимый предмет, авто-подбор): контейнер отдаёт лут, обычный блок — сам себя. */
+    /** Добыча блока в инвентарь (перелив — дропом): контейнер отдаёт свой лут, обычный блок — сам себя. */
     private void giveYield(GameSession s, Player p, Block block)
     {
         if (block.getState() instanceof Container c)
         {
             for (ItemStack it : c.getInventory().getContents())
             {
-                if (it != null && !it.getType().isAir()) {dropTracked(s, p.getLocation(), it.clone());}
+                if (it != null && !it.getType().isAir()) {giveOrDrop(s, p, it.clone());}
             }
         }
         else
         {
-            dropTracked(s, p.getLocation(), new ItemStack(block.getType()));
+            giveOrDrop(s, p, new ItemStack(block.getType()));
         }
+    }
+
+    private void giveOrDrop(GameSession s, Player p, ItemStack item)
+    {
+        for (ItemStack rem : p.getInventory().addItem(item).values()) {dropTracked(s, p.getLocation(), rem);}
+    }
+
+    /** Списать 1 прочность с инструмента в руке (учёт Unbreaking/неразрушимости) — при добыче ломание отменяется. */
+    private void damageTool(Player p)
+    {
+        ItemStack tool = p.getInventory().getItemInMainHand();
+        if (tool.getType().getMaxDurability() <= 0) {return;} // не инструмент / без прочности
+        ItemMeta meta = tool.getItemMeta();
+        if (meta == null || meta.isUnbreakable() || !(meta instanceof Damageable dmg)) {return;}
+        int unbreaking = tool.getEnchantmentLevel(Enchantment.UNBREAKING);
+        if (unbreaking > 0 && ThreadLocalRandom.current().nextInt(unbreaking + 1) != 0) {return;} // Unbreaking спас
+        int next = dmg.getDamage() + 1;
+        if (next >= tool.getType().getMaxDurability())
+        {
+            p.getInventory().setItemInMainHand(null); // инструмент сломался
+            p.playSound(p.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
+            return;
+        }
+        dmg.setDamage(next);
+        tool.setItemMeta(meta);
     }
 
     /** Уронить предмет с учётом отката матча (удалится в cleanup, если не подобрали). */
