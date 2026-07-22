@@ -38,15 +38,24 @@ public class GameListener implements Listener
         if (!(e.getEntity() instanceof Player p)) {return;}
         GameSession s = plugin.arenas().sessionOf(p);
         if (s == null) {return;}
-        if (s.phase() != GamePhase.RUNNING) {e.setCancelled(true); return;} // в лобби/отсчёте урона нет
+        if (s.phase() != GamePhase.RUNNING)
+        {
+            // Вне матча урона нет — если только игра не разрешила лобби-PvP (разминку).
+            if (!s.game().allowLobbyPvp()) {e.setCancelled(true);}
+            return;
+        }
 
         MatchPlayer mp = s.player(p.getUniqueId());
         if (mp == null || !mp.isAlive()) {e.setCancelled(true); return;} // спектаторы неуязвимы
 
         if (p.getHealth() - e.getFinalDamage() > 0) {return;} // не смертельно — обычный урон
         e.setCancelled(true);
-        creditKiller(s, e);
-        s.eliminate(p, true);
+        // Летальный урон: игра решает — возродить (false) или выбить в спектаторы (true).
+        if (s.game().onLethalDamage(s, p))
+        {
+            creditKiller(s, e);
+            s.eliminate(p, true);
+        }
     }
 
     private void creditKiller(GameSession s, EntityDamageEvent e)

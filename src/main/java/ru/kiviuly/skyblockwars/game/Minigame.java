@@ -56,4 +56,39 @@ public abstract class Minigame
 
     /** Доп. строки сайдбара под стандартными (пусто = только стандартные). */
     public List<Component> scoreboardLines(GameSession s, Player viewer) {return List.of();}
+
+    // ===== обобщённые хуки расширения (движок зовёт, игра решает) =====
+
+    /**
+     * Смертельный урон по игроку в матче. Верни {@code true} — движок штатно выбивает
+     * игрока в спектаторы (дефолт). Верни {@code false} — игра сама обработала событие
+     * (например, возродила игрока на его блоке): движок НЕ выбивает. Урон уже отменён.
+     */
+    public boolean onLethalDamage(GameSession s, Player p) {return true;}
+
+    /**
+     * Разрешён ли PvP-урон в лобби/отсчёте (для лобби-разминок). По умолчанию нет —
+     * вне фазы матча урона нет. При {@code true} движок не гасит урон в лобби; беречь
+     * игроков от реальной смерти и считать статистику — забота самой игры.
+     */
+    public boolean allowLobbyPvp() {return false;}
+
+    /**
+     * Игро-специфичная подкоманда {@code /<cmd> <sub> ...} (движок зовёт после своих,
+     * до «неизвестная подкоманда»; вызывающий уже прошёл проверку прав админа).
+     * Верни {@code true}, если обработал. {@code args[0]} = сам {@code sub}.
+     */
+    public boolean onCommand(Player p, String sub, String[] args) {return false;}
+
+    /** Подсказки таб-комплита для игро-специфичных подкоманд (движок домешивает к своим). */
+    public List<String> tabComplete(Player p, String[] args) {return List.of();}
+
+    /** Доп. строки в {@code /<cmd> help} (игро-специфичные команды). */
+    public List<Component> helpLines(Player p) {return List.of();}
+
+    /** {@code /<cmd> reload}: перечитать игро-специфичные конфиги. */
+    public void onReload() {}
+
+    /** Арена удалена ({@code /<cmd> remove}): подчистить игро-специфичные данные арены. */
+    public void onArenaRemoved(String arenaId) {}
 }

@@ -68,6 +68,7 @@ public class ArenaManager
         if (arena.getSession() != null) {arena.getSession().forceCleanup();}
         File f = fileOf(id);
         if (f.exists()) {f.delete();}
+        if (plugin.game() != null) {plugin.game().onArenaRemoved(arena.getId());}
         return true;
     }
 

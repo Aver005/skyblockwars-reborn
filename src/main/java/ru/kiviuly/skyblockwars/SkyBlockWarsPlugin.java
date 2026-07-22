@@ -83,6 +83,7 @@ public final class SkyBlockWarsPlugin extends JavaPlugin
         Msg.reload();
         DebugLog.reload();
         arenaManager.loadAll();
+        if (game != null) {game.onReload();}
     }
 
     public ArenaManager arenas() {return arenaManager;}

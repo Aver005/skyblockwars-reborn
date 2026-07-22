@@ -87,6 +87,10 @@ public class MinigameCommand implements TabExecutor
             default -> {}
         }
 
+        // Игро-специфичные подкоманды (setcenter/setradius/... в SkyBlockWars) — до
+        // ядровой логики, требующей арену. Игра сама парсит и валидирует свои аргументы.
+        if (plugin.game().onCommand(p, sub, args)) {return true;}
+
         if (args.length < 2) {Msg.send(p, "errors.need-args"); return true;}
         String id = args[1].toUpperCase(Locale.ROOT);
 
@@ -219,6 +223,7 @@ public class MinigameCommand implements TabExecutor
         if (p.hasPermission("sbw.admin"))
         {
             for (Component line : Msg.getList("help.admin")) {p.sendMessage(line);}
+            for (Component line : plugin.game().helpLines(p)) {p.sendMessage(line);}
         }
     }
 
@@ -234,6 +239,7 @@ public class MinigameCommand implements TabExecutor
             List<String> subs = new ArrayList<>(PLAYER_SUBS);
             if (p.hasPermission("sbw.admin")) {subs.addAll(ADMIN_SUBS);}
             filter(subs, args[0], out);
+            mergeGameCompletions(p, args, out);
             return out;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
@@ -251,7 +257,15 @@ public class MinigameCommand implements TabExecutor
         {
             filter(SET_KEYS, args[2], out);
         }
+        mergeGameCompletions(p, args, out);
         return out;
+    }
+
+    /** Домешать таб-подсказки игро-специфичных подкоманд (только админам). */
+    private void mergeGameCompletions(Player p, String[] args, List<String> out)
+    {
+        if (!p.hasPermission("sbw.admin")) {return;}
+        for (String s : plugin.game().tabComplete(p, args)) {if (!out.contains(s)) {out.add(s);}}
     }
 
     private void filter(List<String> options, String prefix, List<String> out)
