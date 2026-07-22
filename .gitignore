@@ -20,3 +20,6 @@ deploy/
 *.log
 .dev
 .trae
+
+# Local env (deploy dir etc.) — copy .env.example to .env
+.env

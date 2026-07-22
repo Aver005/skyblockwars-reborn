@@ -28,8 +28,10 @@ Package root: `ru.kiviuly.skyblockwars`. Твоя задача — двигат�
 
 ```bash
 ./gradlew build                                   # сборка → build/libs/SkyBlockWars-1.0.0.jar
-./gradlew deploy -PdeployDir=<server>/plugins     # сборка + jar в тестовый сервер
+./gradlew deploy                                  # + копия jar в папку из .env (DEPLOY_DIR); или -PdeployDir=<server>/plugins
 ```
+
+Каталог деплоя: `-PdeployDir=<путь>` → `DEPLOY_DIR` из `.env` (см. `.env.example`) → `build/deploy`.
 
 JDK 25 скачается сам (toolchain + foojay-resolver). Успех: строка
 `[SkyBlockWars] SkyBlockWars enabled` в логе и **ноль** стектрейсов. Не запустил и не проверил —

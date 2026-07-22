@@ -34,11 +34,13 @@ SQLite-статистику и HUD — с одной точкой расшире
 
 ```bash
 ./gradlew build                                   # jar → build/libs/SkyBlockWars-1.0.0.jar
-./gradlew deploy -PdeployDir=<server>/plugins     # сборка + копия в тестовый сервер
+./gradlew deploy                                  # сборка + копия jar в папку из .env (DEPLOY_DIR)
+./gradlew deploy -PdeployDir=<server>/plugins     # или явно указать каталог
 ```
 
 JDK 25 скачается сам (Gradle toolchain + foojay-resolver) — вручную ставить нечего.
-Без `-PdeployDir` задача `deploy` кладёт jar в `build/deploy` (просто чтобы не падать).
+Каталог деплоя берётся по приоритету: `-PdeployDir=<путь>` → `DEPLOY_DIR` из `.env`
+(скопируй `.env.example` в `.env`) → иначе `build/deploy`.
 
 Запусти сервер. Успех выглядит так: строка `[SkyBlockWars] SkyBlockWars enabled` в логе и **ноль**
 стектрейсов. Дальше — арена без единого конфига руками:

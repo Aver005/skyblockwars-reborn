@@ -49,7 +49,8 @@ Last updated: 2026-07-22
 
 ## Процесс
 
-- Проверка изменений: `./gradlew deploy -PdeployDir=<server>/plugins` → перезапуск
-  сервера → лог без стектрейсов (`[SkyBlockWars] SkyBlockWars enabled`) + ручная проверка фичи.
+- Проверка изменений: `./gradlew deploy` (каталог из `.env`/`DEPLOY_DIR`, либо
+  `-PdeployDir=<server>/plugins`) → перезапуск сервера → лог без стектрейсов
+  (`[SkyBlockWars] SkyBlockWars enabled`) + ручная проверка фичи.
 - После нетривиального изменения — обнови `.memories/STATE.md` (см. `INDEX.md`,
   «Правило поддержки»). Память противоречит коду → прав код, чини память.
