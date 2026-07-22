@@ -45,7 +45,16 @@ public class ArenaManager
         for (File f : files)
         {
             String id = f.getName().substring(0, f.getName().length() - 4).toUpperCase();
-            arenas.put(id, Arena.load(id, f));
+            try
+            {
+                arenas.put(id, Arena.load(id, f));
+            }
+            catch (Exception e)
+            {
+                // Мир арены ещё/уже не загружен (unknown world при десериализации Location) и т.п. —
+                // пропускаем эту арену, но НЕ роняем плагин. Подхватится по /sbw reload, когда мир готов.
+                plugin.getLogger().warning("Skipped arena " + id + " (load failed): " + e.getMessage());
+            }
         }
     }
 

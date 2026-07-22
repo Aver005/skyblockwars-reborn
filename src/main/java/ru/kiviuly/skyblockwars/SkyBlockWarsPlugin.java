@@ -45,8 +45,6 @@ public final class SkyBlockWarsPlugin extends JavaPlugin
         // >>> ТОЧКА РАСШИРЕНИЯ: игра SkyBlockWars Reborn (заглушка TemplateGame оставлена как образец) <<<
         game = new SkyBlockWarsGame(this);
 
-        arenaManager.loadAll();
-
         var pm = getServer().getPluginManager();
         pm.registerEvents(new MenuListener(), this);
         pm.registerEvents(new GameListener(this), this);
@@ -59,8 +57,17 @@ public final class SkyBlockWarsPlugin extends JavaPlugin
         mg.setExecutor(command);
         mg.setTabCompleter(command);
 
-        getLogger().info("SkyBlockWars enabled, arenas loaded: " + arenaManager.all().size() + ", game: " + game.id());
-        DebugLog.log(Cat.ADMIN, "plugin enable arenas=%d game=%s", arenaManager.all().size(), game.id());
+        // Загрузку арен откладываем на первый тик: миры арен (в т.ч. загружаемые ДРУГИМИ
+        // плагинами — Multiverse и т.п.) к этому моменту уже подняты. Иначе Location с
+        // ещё-не-загруженным миром роняет парсинг YAML и весь плагин при onEnable.
+        getServer().getScheduler().runTask(this, () ->
+        {
+            arenaManager.loadAll();
+            getLogger().info("SkyBlockWars: arenas loaded: " + arenaManager.all().size());
+        });
+
+        getLogger().info("SkyBlockWars enabled, game: " + game.id());
+        DebugLog.log(Cat.ADMIN, "plugin enable game=%s", game.id());
     }
 
     @Override
