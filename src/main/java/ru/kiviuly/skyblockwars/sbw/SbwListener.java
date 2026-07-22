@@ -8,6 +8,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
 import ru.kiviuly.skyblockwars.game.GamePhase;
 import ru.kiviuly.skyblockwars.game.GameSession;
@@ -59,5 +60,18 @@ public class SbwListener implements Listener
         if (s == null || s.phase() != GamePhase.RUNNING) {return;}
         SbwState st = SbwState.of(s);
         if (st != null) {st.addPlaced(e.getBlock().getLocation());}
+    }
+
+    /**
+     * Лобби-дуэль: в лобби/отсчёте считаем нанесённый урон и не даём умереть (авто-хил).
+     * Приоритет HIGH после ядрового GameListener (который не гасит урон при allowLobbyPvp).
+     */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onLobbyDamage(EntityDamageEvent e)
+    {
+        if (!(e.getEntity() instanceof Player victim)) {return;}
+        GameSession s = plugin.arenas().sessionOf(victim);
+        if (s == null || s.phase() == GamePhase.RUNNING || s.phase() == GamePhase.ENDING) {return;}
+        game.lobbyDamage(s, victim, e);
     }
 }

@@ -21,6 +21,8 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -33,6 +35,7 @@ import ru.kiviuly.skyblockwars.game.Minigame;
 import ru.kiviuly.skyblockwars.sbw.ArenaGameConfig.EpochMode;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
 import ru.kiviuly.skyblockwars.sbw.epoch.EpochBlock;
+import ru.kiviuly.skyblockwars.sbw.menu.EpochListMenu;
 import ru.kiviuly.skyblockwars.util.Msg;
 
 /**
@@ -49,7 +52,7 @@ import ru.kiviuly.skyblockwars.util.Msg;
  */
 public class SkyBlockWarsGame extends Minigame
 {
-    private static final List<String> SUBS = List.of("setcenter", "setradius", "setmaxplayers", "setmode");
+    private static final List<String> SUBS = List.of("setcenter", "setradius", "setmaxplayers", "setmode", "epochs");
 
     /** Кэш игро-конфигов арен (ленивая загрузка, сброс на reload). */
     private final Map<String, ArenaGameConfig> configs = new HashMap<>();
@@ -85,6 +88,7 @@ public class SkyBlockWarsGame extends Minigame
     private int defaultMatchSeconds() {return Math.max(1, plugin.getConfig().getInt("skyblockwars.match-seconds", 1800));}
     private int defaultFightSeconds() {return Math.max(0, plugin.getConfig().getInt("skyblockwars.fight-seconds", 300));}
     private double destructionRate() {return Math.max(0.01, Math.min(1.0, plugin.getConfig().getDouble("skyblockwars.destruction-rate", 0.08)));}
+    private int destructionMaxSeconds() {return Math.max(10, plugin.getConfig().getInt("skyblockwars.destruction-max-seconds", 120));}
 
     private EpochMode defaultMode()
     {
@@ -108,8 +112,12 @@ public class SkyBlockWarsGame extends Minigame
     // ===== жизненный цикл матча =====
 
     @Override
+    public boolean allowLobbyPvp() {return plugin.getConfig().getBoolean("skyblockwars.lobby-duel", true);}
+
+    @Override
     public void onStart(GameSession s)
     {
+        announceLobbyWinner(s);
         SbwState st = ensureState(s);
         Epoch first = st.epochAt(0);
         s.broadcast("sbw.match-begin", Msg.ph("epoch", first != null ? first.getName() : "-"));
@@ -140,7 +148,12 @@ public class SkyBlockWarsGame extends Minigame
         int elapsed = s.elapsedSeconds();
         SbwState.MatchPhase computed = st.phaseAt(elapsed);
         if (computed != st.getMatchPhase()) {onPhaseChange(s, st, computed);}
-        if (st.getMatchPhase() == SbwState.MatchPhase.DESTRUCTION) {tickDestruction(s, st);}
+        if (st.getMatchPhase() == SbwState.MatchPhase.DESTRUCTION)
+        {
+            tickDestruction(s, st);
+            int destrElapsed = elapsed - (st.matchSeconds() + st.fightSeconds());
+            if (destrElapsed >= destructionMaxSeconds() && s.alivePlayers().size() > 1) {suddenDeath(s);}
+        }
         bossBar.updateAll(st, s.alivePlayers(), elapsed);
     }
 
@@ -180,6 +193,12 @@ public class SkyBlockWarsGame extends Minigame
             p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 0.9f, 1f);
         }
         s.broadcast("sbw.destruction-begin");
+    }
+
+    /** Аварийное завершение затянувшегося разрушения: добить оставшихся (якорей нет — выбывание). */
+    private void suddenDeath(GameSession s)
+    {
+        for (Player p : new ArrayList<>(s.alivePlayers())) {p.damage(1000.0);}
     }
 
     /** Каждую секунду фазы разрушения убираем случайную долю оставшихся поставленных блоков. */
@@ -292,6 +311,52 @@ public class SkyBlockWarsGame extends Minigame
         }
         // блок ломается ванильно (событие не отменяли) — дроп достаётся атакующему
     }
+
+    // ===== лобби-дуэль (разминка без последствий) =====
+
+    /** Урон в лобби: считаем нанесённый игроками урон и НЕ даём умереть (авто-хил). Из SbwListener. */
+    public void lobbyDamage(GameSession s, Player victim, EntityDamageEvent e)
+    {
+        if (e.getCause() == EntityDamageEvent.DamageCause.VOID)
+        {
+            e.setCancelled(true);
+            if (s.arena().getLobby() != null) {victim.teleport(s.arena().getLobby());}
+            fullHeal(victim);
+            return;
+        }
+        if (e instanceof EntityDamageByEntityEvent by && by.getDamager() instanceof Player attacker
+            && !attacker.equals(victim) && plugin.arenas().sessionOf(attacker) == s)
+        {
+            double total = lobbyTally(s).merge(attacker.getUniqueId(), e.getFinalDamage(), Double::sum);
+            attacker.sendActionBar(Msg.get("sbw.lobby-damage", Msg.ph("dmg", oneDecimal(total))));
+        }
+        if (victim.getHealth() - e.getFinalDamage() <= 0.5) // без смертей — авто-хил перед гибелью
+        {
+            e.setCancelled(true);
+            fullHeal(victim);
+            victim.playSound(victim.getLocation(), Sound.ENTITY_PLAYER_HURT, 0.7f, 1f);
+        }
+    }
+
+    private void announceLobbyWinner(GameSession s)
+    {
+        Map<UUID, Double> tally = lobbyTally(s);
+        var top = tally.entrySet().stream().max(Map.Entry.comparingByValue()).orElse(null);
+        if (top != null && top.getValue() > 0)
+        {
+            Player tp = Bukkit.getPlayer(top.getKey());
+            s.broadcast("sbw.lobby-winner", Msg.ph("player", tp != null ? tp.getName() : "?"), Msg.ph("dmg", oneDecimal(top.getValue())));
+        }
+        s.data().remove("sbw.lobbydmg");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<UUID, Double> lobbyTally(GameSession s)
+    {
+        return (Map<UUID, Double>) s.data().computeIfAbsent("sbw.lobbydmg", k -> new HashMap<UUID, Double>());
+    }
+
+    private static String oneDecimal(double v) {return String.format("%.1f", v);}
 
     // ===== helpers =====
 
@@ -421,7 +486,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Эпохи по умолчанию — чтобы игра работала до настройки арены (образец: 3 эпохи, есть контейнер). */
-    private List<Epoch> defaultEpochs()
+    public List<Epoch> defaultEpochs()
     {
         Epoch stone = new Epoch("Каменный век", 16);
         stone.getBlocks().add(new EpochBlock(Material.COBBLESTONE, 6));
@@ -458,8 +523,17 @@ public class SkyBlockWarsGame extends Minigame
             case "setradius" -> {return cmdSetRadius(p, args);}
             case "setmaxplayers" -> {return cmdSetMaxPlayers(p, args);}
             case "setmode" -> {return cmdSetMode(p, args);}
+            case "epochs" -> {return cmdEpochs(p, args);}
             default -> {return false;}
         }
+    }
+
+    private boolean cmdEpochs(Player p, String[] args)
+    {
+        Arena arena = setupArena(p, args, "sbw.usage-epochs");
+        if (arena == null) {return true;}
+        new EpochListMenu(plugin, this, arena, config(arena.getId())).open(p);
+        return true;
     }
 
     /** Резолв арены для setup-команды; null + сообщение, если недоступна. */

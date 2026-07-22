@@ -242,6 +242,7 @@ sbw:
   usage-setradius: "<yellow>/sbw setradius <ID> <число|default> <gray>— радиус кольца спавнов."
   usage-setmaxplayers: "<yellow>/sbw setmaxplayers <ID> <число> <gray>— число игроков (и точек по кольцу)."
   usage-setmode: "<yellow>/sbw setmode <ID> <personal|shared> <gray>— режим продвижения эпох."
+  usage-epochs: "<yellow>/sbw epochs <ID> <gray>— GUI-редактор эпох (блоки, веса, лут, рубежи, режим)."
   bossbar-epoch: "<white><epoch> <gray>| рубеж <yellow><prog><gray>/<yellow><goal>"
   bossbar-epoch-final: "<white><epoch> <gray>| <yellow><prog> <gray>сломано (финал)"
   sidebar-epoch: "<gray>Эпоха: <white><epoch>"
@@ -265,12 +266,75 @@ sbw:
   destruction-title: "<dark_red><b>РАЗРУШЕНИЕ</b>"
   destruction-subtitle: "<gray>Поставленные блоки исчезают!"
   destruction-begin: "<dark_red>Арена разрушается — поставленные блоки исчезают. Победит последний выживший!"
+  lobby-damage: "<gray>Урон в разминке: <yellow><dmg>"
+  lobby-winner: "<gold>Разминку выиграл <yellow><player> <gold>(урон <yellow><dmg><gold>)."
   help:
     - "<dark_green>--- SkyBlockWars ---"
     - "<gray>/sbw setcenter <ID> <gray>— центр арены (кольцо спавнов)"
     - "<gray>/sbw setradius <ID> <n|default> <gray>— радиус кольца"
     - "<gray>/sbw setmaxplayers <ID> <n> <gray>— число игроков"
     - "<gray>/sbw setmode <ID> personal|shared <gray>— режим эпох"
+    - "<gray>/sbw epochs <ID> <gray>— GUI-редактор эпох"
+
+# ===== SkyBlockWars: GUI редактора эпох =====
+sbwgui:
+  list-title: "<dark_gray><b>Эпохи: </b>"
+  list-add-name: "<green>+ Добавить эпоху"
+  list-add-lore:
+    - "<gray>Создать новую эпоху в конце списка."
+  list-mode-name: "<gold>Режим эпох"
+  list-mode-value: "<gray>Сейчас: <yellow><mode>"
+  list-mode-lore:
+    - "<yellow>► Клик — переключить."
+    - "<gray>personal — у каждого своя цепочка."
+    - "<gray>shared — общая на арену."
+  mode-personal: "персональный"
+  mode-shared: "общий"
+  list-epoch-num: "<dark_gray>эпоха №<n>"
+  list-epoch-blocks: "<gray>Блоков: <yellow><n>"
+  list-epoch-actions:
+    - "<yellow>► ЛКМ — редактировать"
+    - "<gray>ПКМ — удалить"
+    - "<gray>Shift+ЛКМ вверх / Shift+ПКМ вниз — порядок"
+  epoch-title: "<dark_gray><b>Эпоха</b>"
+  epoch-name-btn: "<gold>Имя эпохи"
+  epoch-name-lore:
+    - "<yellow>► Клик — переименовать (наковальня)."
+    - "<gray>Сейчас:"
+  epoch-name-anvil: "<dark_gray>Имя эпохи:"
+  epoch-threshold-name: "<gold>Рубеж"
+  epoch-threshold-value: "<gray>Рубеж: <yellow><n> <gray>блоков"
+  epoch-threshold-final: "<gray>Рубеж: <yellow>нет <gray>(финальная — до конца матча)"
+  epoch-addblock-name: "<green>+ Добавить блок"
+  epoch-addblock-lore:
+    - "<yellow>► Клик — открыть палитру блоков."
+  block-click:
+    - "<yellow>► Клик — настроить блок"
+  block-title: "<dark_gray><b>Блок эпохи</b>"
+  block-weight-name: "<gold>Вес появления"
+  block-weight: "<gray>Вес: <yellow><n>"
+  block-is-container: "<green>Контейнер (можно вложить лут)"
+  block-is-plain: "<dark_gray>Обычный блок"
+  block-loot-name: "<gold>Лут контейнера"
+  block-loot-lore:
+    - "<yellow>► Клик — редактор лута."
+    - "<gray>Что положишь — то и появится внутри."
+  block-loot-count: "<gray>Предметов внутри: <yellow><n>"
+  block-remove-name: "<red>Удалить блок"
+  block-remove-lore:
+    - "<gray>Убрать этот блок из эпохи."
+  palette-title: "<dark_gray><b>Палитра блоков</b>"
+  palette-add:
+    - "<yellow>► Клик — добавить в эпоху (вес 1)."
+  palette-added: "<green>Блок <yellow><block><green> добавлен в эпоху."
+  loot-title: "<dark_gray>Лут контейнера"
+  loot-locked: "<dark_gray>—"
+  threshold-adjust:
+    - "<dark_green>ЛКМ +1 <gray>(Shift +10)"
+    - "<yellow>ПКМ -1 <gray>(Shift -10), мин. -1 = финал"
+  weight-adjust:
+    - "<dark_green>ЛКМ +1 <gray>(Shift +10)"
+    - "<yellow>ПКМ -1 <gray>(Shift -10)"
 
 # ===== справка =====
 help:

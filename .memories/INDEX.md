@@ -21,6 +21,8 @@ Last updated: 2026-07-22 — шаблон развёрнут. Каркас пл�
   наследование `Minigame`, разбор хуков, пример `SpleefGame`, состояние в `data()`.
 - **Команды и конфиг** — [`docs/03-commands-and-config.md`](../docs/03-commands-and-config.md):
   `/sbw`, `config.yml`, `arenas/<id>.yml`, `messages.yml`.
+- **Игра SkyBlockWars** — [`docs/04-skyblockwars.md`](../docs/04-skyblockwars.md):
+  правила, настройка арены (кольцо спавнов), редактор эпох, секция `skyblockwars`.
 - **Обзор проекта** — [`README.md`](../README.md).
 
 ## Легенда статусов

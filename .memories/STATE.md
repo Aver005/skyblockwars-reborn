@@ -4,59 +4,79 @@ Last updated: 2026-07-22
 
 ## Кратко
 
-Проект **SkyBlockWars Reborn** отпочкован от шаблона MCMGP: игро-независимый каркас
-платформы мини-игр + одна точка расширения (`Minigame`). Ребрендинг выполнен
+**SkyBlockWars Reborn** — мини-игра на базе шаблона MCMGP. Реализована игра целиком
 (package `ru.kiviuly.skyblockwars`, плагин `SkyBlockWars`, команда `/sbw`, ветка
-`develop`), сборка зелёная (`SkyBlockWars-1.0.0.jar`). Игра SkyBlockWars ещё НЕ
-реализована — активна заглушка `TemplateGame`; впереди эпохи/спавны/фазы матча.
+`develop`). Сборка зелёная (`build/libs/SkyBlockWars-1.0.0.jar`). Ядро осталось
+обобщённым — вся игровая специфика в подпакете `sbw/` (наследник `Minigame`).
 
-## Что развёрнуто (каркас)
+Суть игры: каждого телепортирует на свой спавн; блок под ним — блок возрождения.
+Пока чужой не сломал — при гибели игрок возрождается. Ломая свой блок, игрок добывает
+его содержимое, блок восстанавливается случайным из текущей эпохи (по весам), прогресс
+идёт к рубежу эпохи (боссбар). 30 мин игры → слом всех блоков → 5 мин схватки →
+разрушение арены (поставленные блоки исчезают). Победитель — последний выживший.
 
-- **arena/** — `Arena` (мир, лобби, спавны, лимиты, тайминги, обобщённая
-  `settings`-мапа), `ArenaManager` (реестр + player→session + join/leave),
-  `ArenaCheck` (валидатор CRITICAL/WARNING/GOOD), `SetupMarkers` (маркеры точек).
-- **game/** — `GamePhase` (LOBBY/COUNTDOWN/RUNNING/ENDING), `MatchPlayer`,
-  `MatchResult`, `Minigame` (абстрактная точка расширения), `GameSession`
-  (движок жизненного цикла), `TemplateGame` (заглушка `Minigame`).
-- **player/** — `PlayerSnapshot` (save/clear/restore, `snapshots/<uuid>.yml`,
-  переживает рестарт).
-- **menu/** — `Menu` (InventoryHolder) + `MenuListener`, `AnvilInputMenu`,
-  `ArenaSelectMenu`, `ArenaHubMenu`, `ArenaSettingsMenu`, `ArenaPointsMenu`.
-- **listener/** — `GameListener`, `ProtectionListener`, `ChatListener`, `SetupListener`.
-- **command/** — `MinigameCommand` (`/sbw` + алиасы `/skyblockwars`, `/sbwreborn`).
-- **stats/** — `StatsRepository` (SQLite: wins/loses/kills/played, async-запись).
-- **ui/** — `GameScoreboard` (сайдбар), `GameBossBar` (фаза/таймер).
-- **util/** — `Keys` (PDC), `Items` (`fromSpec` из YML-спеки), `Msg`
-  (каталог `messages.yml`), `DebugLog` (`/sbw debuglog`, ASCII, кольцевой буфер).
-- **SkyBlockWarsPlugin** — bootstrap/wiring; держит `game()`, `ArenaManager`, `StatsRepository`.
-- **Конфиги** — `config.yml`, `plugin.yml`, `messages.yml` (тексты игрокам).
+## Что реализовано — игра (`sbw/`)
+
+- **`SkyBlockWarsGame`** (наследник `Minigame`) — оркестратор: команды, хуки матча,
+  ломание блоков, эпохи, фазы, лобби-дуэль. Зарегистрирован в `SkyBlockWarsPlugin.onEnable`.
+- **`ArenaGameConfig`** — per-arena игро-конфиг в ОТДЕЛЬНОМ файле `game/<ID>.yml`
+  (центр, радиус, режим эпох, длительности фаз, эпохи). Ядровой `Arena` не тронут;
+  кольцо спавнов пишется в ядровой `arena.getSpawns()`.
+- **`RingSpawns`** — расстановка спавнов по окружности вокруг центра (равноудалённо,
+  лицом к центру), блочные координаты (ядро добавляет +0.5).
+- **`SbwState`** (в `GameSession.data()`) — состояние матча: режим/эпохи, per-player
+  прогресс и блок возрождения, общий прогресс (SHARED), карта «блок→владелец»,
+  фаза матча (NORMAL/FIGHT/DESTRUCTION), множество поставленных игроками блоков.
+- **`EpochBossBar`** — per-player боссбар: прогресс эпохи → отсчёт схватки → разрушение.
+- **`SbwListener`** — BlockBreak (свой блок = добыча+прогресс+рефилл; чужой = слом якоря),
+  BlockPlace (учёт для разрушения), EntityDamage в лобби (дуэль без смертей).
+- **`epoch/`** — `Epoch` (блоки+рубеж, взвешенный `pickRandom`), `EpochBlock`
+  (материал+вес+лут контейнера), `Containers` (какие блоки — контейнеры).
+- **`menu/`** — продвинутый GUI редактора эпох: `EpochListMenu` (список/порядок/режим),
+  `EpochMenu` (имя/рубеж/блоки), `BlockEditMenu` (вес/лут/удаление),
+  `BlockPaletteMenu` (палитра всех блоков), `LootEditorMenu` (полный редактор лута
+  контейнера — что положишь, то и появится). Вход: `/sbw epochs <ID>`.
+
+## Обобщённые хуки, добавленные в ЯДРО (годятся любой игре)
+
+`Minigame`: `onLethalDamage` (респавн/выбывание), `allowLobbyPvp`, `onCommand`/
+`tabComplete`/`helpLines` (делегирование подкоманд игре), `onReload`, `onArenaRemoved`,
+`onPlayerRemoved`. Их зовут `GameListener` (летальный урон/лобби-PvP),
+`MinigameCommand` (делегирование), `GameSession.removePlayer`, `ArenaManager.delete`,
+`SkyBlockWarsPlugin.reloadEverything`. Игровой специфики в ядре нет.
+
+## Команды игры (сверх ядровых `/sbw`)
+
+- `/sbw setcenter <ID>` — центр арены = твоя позиция, спавны встают по кольцу.
+- `/sbw setradius <ID> <n|default>` — радиус кольца.
+- `/sbw setmaxplayers <ID> <n>` — число игроков (и точек по кольцу).
+- `/sbw setmode <ID> personal|shared` — режим эпох.
+- `/sbw epochs <ID>` — GUI-редактор эпох (блоки, веса, лут, рубежи, режим).
 
 ## Статус проверки
 
-- `[DONE]` **Сборка** — `./gradlew clean build` ЗЕЛЁНЫЙ, jar собран
-  (`build/libs/SkyBlockWars-1.0.0.jar`, ~102 КБ). Компиляция с первого раза.
-- `[DONE]` **Скрипт переименования** — `rename.sh` протестирован на одноразовой
-  копии: `com.acme.spleef Spleef spleef` → перенос пакета, переименование класса,
-  правки plugin.yml/gradle, 0 старых ссылок, переименованный проект компилируется.
-- `[?]` **Смоук на сервере** — НЕ проводился (по решению владельца — только
-  сборка). Ожидаемый успех: `[SkyBlockWars] SkyBlockWars enabled` в логе, ноль стектрейсов.
-- `[?]` **Плейтест матча** — НЕ проводился (демо-игры нет; полноценно проверяется
-  после реализации конкретного `Minigame`).
+- `[DONE]` **Сборка** — `./gradlew build` ЗЕЛЁНЫЙ на каждой фазе; jar собран.
+- `[DONE]` **YAML** — `config.yml`/`messages.yml`/`plugin.yml` парсятся (pyyaml).
+- `[?]` **Смоук на сервере** — НЕ проводился (нет запущенного сервера+клиента в среде).
+  Ожидаемый успех: `[SkyBlockWars] SkyBlockWars enabled`, ноль стектрейсов.
+- `[?]` **Плейтест** — НЕ проводился. Проверить руками: кольцо спавнов (`/sbw setcenter`),
+  возрождение/добыча/рефилл, смена эпох, фазы 30м→схватка→разрушение, GUI редактора эпох,
+  лобби-дуэль. Быстрый сценарий: `/sbw create A1` → `/sbw setcenter A1` →
+  `/sbw setmaxplayers A1 8` → `/sbw setlobby A1` → `/sbw enable A1` → `/sbw start A1`.
 
-## Чего НЕТ (осознанно)
+## Данные (runtime)
 
-- Реальной игры. Активен `TemplateGame` — заглушка `Minigame` (no-op хуки).
-  Это ожидаемо: шаблон поставляется голым.
+`plugins/SkyBlockWars/`: `config.yml`, `messages.yml`, `arenas/<id>.yml` (ядро:
+мир/лобби/спавны/лимиты), `game/<ID>.yml` (игра: центр/радиус/режим/фазы/эпохи+лут),
+`snapshots/`, `stats.db`.
 
-## Следующий шаг (для нового проекта на базе шаблона)
+## Следующий шаг
 
-1. Ребренд под свой проект — скрипт `rename.sh` / `rename.bat` (package/plugin/
-   command/artifact); точные аргументы — в шапке скрипта.
-2. Реализовать `Minigame` под свою игру и зарегистрировать в `SkyBlockWarsPlugin.onEnable`
-   вместо `new TemplateGame(this)` — см. [`docs/02-making-a-game.md`](../docs/02-making-a-game.md).
-3. Собрать, задеплоить, смоук на сервере, снять пометки `[?]` выше, обновить STATE.
+1. Смоук на сервере + плейтест, снять `[?]` выше.
+2. При желании: вход в редактор эпох из хаба `/sbw gui` (сейчас — командой),
+   конфиг стартового кита, баланс дефолтных эпох.
 
-## Куда двигаться в самом шаблоне
+## Правило
 
-Держать каркас чистым и обобщённым: расширения ядра — для любой игры, игровая
-специфика — только через `Minigame`. Инварианты — [CONVENTIONS.md](CONVENTIONS.md).
+Ядро держим обобщённым; игровая специфика — только в `sbw/`. Числа арены-игры — в
+`game/<ID>.yml` (`ArenaGameConfig`), не в ядровом `Arena`. Инварианты — [CONVENTIONS.md](CONVENTIONS.md).
