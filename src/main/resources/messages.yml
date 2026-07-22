@@ -1,0 +1,252 @@
+# ============================================================================
+#  MCMGP — тексты игрокам (MiniMessage). Единственный источник строк для игрока.
+#  Плейсхолдеры <n>/<arena>/<player>/... не должны совпадать с именами тегов.
+# ============================================================================
+
+menu:
+  page-info: "<gray>Страница <yellow><page><gray>/<yellow><pages>"
+  page-prev: "<yellow>◄ Назад"
+  page-next: "<yellow>Вперёд ►"
+  back: "<yellow>◄ Назад"
+
+errors:
+  world-not-loaded: "<red>Мир арены не загружен."
+  arena-not-found: "<red>Арены <aqua><arena><red> нет."
+  arena-exists: "<red>Арена <aqua><arena><red> уже существует."
+  need-args: "<red>Недостаточно аргументов."
+  not-a-number: "<red>Нужно число."
+  unknown-sub: "<red>Неизвестная подкоманда. /mg help"
+  no-permission: "<red>Нет прав."
+
+# ===== игровой цикл =====
+game:
+  already-in-game: "<red>Вы уже в игре."
+  arena-disabled: "<red>Арена <aqua><arena><red> выключена."
+  arena-not-ready: "<red>Арена <aqua><arena><red> не настроена (нужны лобби и спавны)."
+  snapshot-exists: "<red>Осталось незавершённое состояние — перезайдите на сервер для восстановления и повторите."
+  match-in-progress: "<red>На арене <aqua><arena><red> уже идёт матч."
+  joined: "<green><player> <gray>вошёл (<yellow><current><gray>/<yellow><max><gray>)."
+  player-left: "<yellow><player> <gray>вышел (<yellow><current><gray>)."
+  you-left: "<yellow>Вы вышли с арены <aqua><arena><yellow>."
+  leave-item-name: "<red>Выйти из игры"
+  leave-item-lore:
+    - "<gray>ПКМ — покинуть арену."
+  countdown-start: "<green>Старт через <yellow><n> <green>сек."
+  countdown: "<gray>Старт через <yellow><n><gray>..."
+  countdown-cancel: "<red>Отсчёт отменён — мало игроков."
+  started: "<green><b>Матч начался!</b> <gray>(<white><game><gray>)"
+  eliminated: "<red><player> <gray>выбыл. Осталось: <yellow><alive>"
+  left-match: "<yellow><player> <gray>покинул матч. Осталось: <yellow><alive>"
+  winner: "<gold><b>Победитель: <yellow><winner></b>"
+  draw: "<gray><b>Ничья.</b>"
+
+# ===== выбор арены (/mg) =====
+select:
+  title: "<dark_gray><b>Мини-игры</b>"
+  empty-name: "<gray>Арен нет"
+  empty-lore:
+    - "<gray>Админ: /mg create <ID>"
+  status-disabled: "<red>выключена"
+  status-idle: "<green>ожидание"
+  status-running: "<yellow>идёт матч"
+  lore-status: "<gray>Статус: <status>"
+  lore-players: "<gray>Игроки: <yellow><current><gray>/<yellow><max>"
+  lore-join: "<yellow>► ЛКМ — войти"
+
+# ===== хаб настройки (/mg gui) =====
+hub:
+  title: "<dark_gray><b>Настройка: </b>"
+  close-name: "<red>Закрыть"
+  status-id: "<dark_gray>id: <gray><id>"
+  status-world: "<gray>Мир: <yellow><world>"
+  status-none: "не задан"
+  status-enabled: "<gray>Включена: <value>"
+  status-yes: "<green>да"
+  status-no: "<red>нет"
+  status-players: "<gray>Игроки: <yellow><min><gray>–<yellow><max>"
+  status-spawns: "<gray>Спавнов: <yellow><n>"
+  status-session: "<gray>Матч: <value>"
+  status-running: "<green>идёт"
+  status-idle: "<gray>нет"
+  btn-settings-name: "<gold>Параметры"
+  btn-settings-lore:
+    - "<gray>Игроки, отсчёты, длительность."
+  btn-points-name: "<gold>Точки"
+  btn-points-lore:
+    - "<gray>Спавны, лобби, блоки-подсказки."
+  btn-name-name: "<gold>Имя арены"
+  btn-name-lore:
+    - "<gray>Ввод через наковальню (MiniMessage)."
+  btn-desc-name: "<gold>Описание"
+  btn-desc-lore:
+    - "<gray>Ввод через наковальню."
+  btn-check-name: "<gold>Проверка"
+  btn-check-lore:
+    - "<gray>Что мешает включить арену."
+  btn-enable-name: "<green>Включить"
+  btn-enable-lore:
+    - "<gray>Проверит и включит арену."
+  btn-disable-name: "<red>Выключить"
+  btn-disable-lore:
+    - "<gray>Снять арену с игры."
+  btn-start-name: "<green>Форс-старт"
+  btn-start-lore:
+    - "<gray>Запустить матч (если есть лобби)."
+  btn-stop-name: "<red>Остановить"
+  btn-stop-lore:
+    - "<gray>Досрочно завершить матч."
+  name-anvil-title: "<dark_gray>Имя арены:"
+  desc-anvil-title: "<dark_gray>Описание:"
+
+# ===== ± редактор параметров =====
+settings:
+  title: "<dark_gray>Параметры: "
+  value: "<gray>Текущее: <yellow><value>"
+  note-zero: "<dark_gray>0 = без лимита"
+  adjust:
+    - "<dark_green>ЛКМ +1 <gray>(Shift +10)"
+    - "<yellow>ПКМ -1 <gray>(Shift -10)"
+  name-minplayers: "<gold>Мин. игроков"
+  name-maxplayers: "<gold>Макс. игроков"
+  name-lobbycountdown: "<gold>Отсчёт в лобби (сек)"
+  name-countdownfull: "<gold>Отсчёт при полном лобби (сек)"
+  name-duration: "<gold>Длительность матча (сек)"
+
+# ===== точки =====
+points:
+  title: "<dark_gray>Точки: "
+  count: "<gray>Спавнов: <yellow><n>"
+  spawn-name: "<gold>Спавны"
+  spawn-lore:
+    - "<yellow>► Клик — получить маркер."
+    - "<gray>ПКМ маркером по блоку = точка спавна,"
+    - "<gray>Shift+ПКМ = убрать точку."
+  spawn-given: "<green>Маркер спавна выдан. ПКМ по блоку — точка."
+  lobby-name: "<gold>Лобби = моя позиция"
+  lobby-current: "<gray>Лобби задано: <value>"
+  lobby-yes: "<green>да"
+  lobby-no: "<red>нет"
+  lobby-lore:
+    - "<yellow>► Клик — сделать лобби здесь."
+  lobby-set: "<green>Лобби арены <aqua><arena><green> установлено."
+  markers-name: "<gold>Расставить подсказки-блоки"
+  markers-lore:
+    - "<gray>Стёкла на лобби/спавнах — видно разметку."
+    - "<gray>Снимаются в начале матча."
+  markers-busy: "<red>Арена <aqua><arena><red> сейчас в матче."
+  markers-placed: "<green>Подсказки расставлены на арене <aqua><arena><green>: <yellow><n>."
+
+anvil:
+  empty: "<red>Введите текст в поле переименования наковальни."
+
+# ===== HUD =====
+hud:
+  title: "<gold><b><game></b>"
+  line-arena: "<gray>Арена: <white><arena>"
+  line-phase: "<gray>Фаза: <white><phase>"
+  phase-lobby: "лобби"
+  phase-countdown: "отсчёт"
+  phase-running: "матч"
+  phase-ending: "финиш"
+  line-alive: "<gray>В игре: <green><n>"
+  line-players: "<gray>Игроки: <yellow><n><gray>/<yellow><max>"
+  line-time: "<gray>Время: <yellow><time>"
+  bossbar-running: "<white>В игре: <green><alive> <gray>| <white>Время: <yellow><time>"
+  bossbar-lobby: "<yellow>Ожидание игроков: <white><n><gray>/<white><max>"
+
+# ===== статистика (/mg stats) =====
+stats:
+  not-found: "<gray>По игроку <white><player><gray> нет статистики."
+  header: "<dark_green>===== <white><player> <dark_green>====="
+  line-wins: "<gray>Побед: <green><n>"
+  line-loses: "<gray>Поражений: <red><n>"
+  line-kills: "<gray>Убийств: <yellow><n>"
+  line-played: "<gray>Матчей: <white><n>"
+
+# ===== проверка арены =====
+check:
+  header: "<dark_green>Проверка арены <aqua><arena><dark_green>:"
+  mark-critical: "<red>[КРИТ] "
+  mark-warning: "<yellow>[ПРЕД] "
+  mark-good: "<green>[ОК] "
+  world: "<red>Мир «<world>» не загружен."
+  no-lobby: "<red>Не задано лобби (/mg setlobby)."
+  no-spawns: "<red>Нет точек спавна (/mg addspawn)."
+  few-spawns: "<yellow>Спавнов <have>, а мин. игроков <need> — на всех может не хватить."
+  player-range: "<yellow>Макс. игроков (<max>) меньше мин. (<min>)."
+  good: "<green>Арена готова к включению."
+  enable-blocked: "<red>Включение арены <aqua><arena><red> заблокировано: есть [КРИТ]."
+
+# ===== разметка маркерами =====
+setup:
+  marker-name: "<gold>Маркер: <yellow><type>"
+  marker-lore-arena: "<dark_gray>арена <arena>"
+  marker-lore-use:
+    - "<yellow>ПКМ по блоку — поставить точку."
+    - "<gray>Shift+ПКМ — убрать точку."
+  bad-arena: "<red>Этот маркер не от существующей арены."
+  busy: "<red>Арена <aqua><arena><red> сейчас в матче."
+  spawn-added: "<green>Спавн (<x>, <y>, <z>) добавлен. Всего: <yellow><n>."
+  spawn-removed: "<yellow>Спавн (<x>, <y>, <z>) убран. Осталось: <white><n>."
+  not-a-point: "<red>Здесь нет точки спавна (<x>, <y>, <z>)."
+
+marker-types:
+  spawn: "спавн"
+
+# ===== админ =====
+admin:
+  reloaded: "<dark_green>Настройки перезагружены."
+  saved: "<dark_green>Сохранено."
+  created: "<dark_green>Арена <aqua><arena><dark_green> создана."
+  created-hint: "<gray>Дальше: /mg gui <arena> (лобби, спавны, параметры), затем /mg enable <arena>."
+  removed: "<yellow>Арена <aqua><arena><yellow> удалена."
+  enabled: "<dark_green>Арена <aqua><arena><dark_green> включена."
+  disabled: "<yellow>Арена <aqua><arena><yellow> выключена."
+  lobby-set: "<green>Лобби арены <aqua><arena><green> установлено."
+  marker-given: "<green>Маркер выдан. ПКМ по блоку — точка."
+  set-usage: "<yellow>/mg set <ID> <minplayers|maxplayers|lobbycountdown|countdownfull|duration> <число>"
+  set-ok: "<dark_green>Арена <aqua><arena><dark_green>: <yellow><key><dark_green> = <yellow><n><dark_green>."
+  name-set: "<dark_green>Имя арены <aqua><arena><dark_green>: <name><dark_green>."
+  desc-set: "<dark_green>Описание арены <aqua><arena><dark_green> обновлено."
+  cannot-start: "<red>Нельзя запустить арену <aqua><arena><red> (нет игроков в лобби)."
+  started: "<dark_green>Матч на арене <aqua><arena><dark_green> запущен."
+  stopped: "<yellow>Матч на арене <aqua><arena><yellow> остановлен."
+  list-header: "<dark_green>===== Арены ====="
+  list-entry: "<white><arena> <gray>— <status> <gray>(<yellow><current><gray>/<yellow><max><gray>)"
+  list-disabled: "<red>выключена"
+  list-idle: "<green>ожидание"
+  list-running: "<yellow>матч"
+  state-on: "<green>ВКЛ"
+  state-off: "<red>ВЫКЛ"
+  debuglog-on: "<dark_green>Отладочный лог включён."
+  debuglog-off: "<yellow>Отладочный лог выключен."
+  debuglog-clear: "<yellow>Буфер очищен (<n> строк)."
+  debuglog-save: "<dark_green>Лог сохранён: <yellow><file>"
+  debuglog-save-fail: "<red>Не удалось сохранить лог (см. консоль)."
+  debuglog-status: "<gray>Отладочный лог: <state> <dark_gray>(в буфере <n>)"
+
+# ===== заглушка игры (замени в своей игре) =====
+template-game:
+  display-name: "Шаблонная мини-игра"
+
+# ===== справка =====
+help:
+  player:
+    - "<dark_green>===== MCMGP ====="
+    - "<gray>/mg <gray>— выбрать арену и войти"
+    - "<gray>/mg join <ID> <gray>— войти на арену"
+    - "<gray>/mg leave <gray>— выйти"
+    - "<gray>/mg stats [ник] <gray>— статистика"
+  admin:
+    - "<dark_green>--- админ ---"
+    - "<gray>/mg create <ID> <gray>— создать арену (мир+лобби здесь)"
+    - "<gray>/mg gui <ID> <gray>— ХАБ настройки (параметры/точки/имя)"
+    - "<gray>/mg setlobby <ID> <gray>— лобби здесь"
+    - "<gray>/mg addspawn <ID> <gray>— маркер спавна (ПКМ по блоку)"
+    - "<gray>/mg set <ID> <ключ> <число> <gray>— параметр"
+    - "<gray>/mg enable|disable <ID> <gray>— вкл/выкл"
+    - "<gray>/mg check <ID> <gray>— валидатор"
+    - "<gray>/mg start|stop <ID> <gray>— форс-старт/стоп"
+    - "<gray>/mg list <gray>— список арен"
+    - "<gray>/mg reload|save <gray>— перезагрузка/сохранение"
+    - "<gray>/mg debuglog on|off|save|clear <gray>— отладочный лог"

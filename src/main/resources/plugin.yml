@@ -1,0 +1,18 @@
+name: MCMGP
+main: ru.kiviuly.mcmgp.McmgpPlugin
+version: '${version}'
+api-version: '1.21'
+author: kiviuly
+description: Minecraft minigame platform template (arena lifecycle + setup GUI + stats).
+commands:
+  mg:
+    description: Minigame commands
+    usage: /mg help
+    aliases: [minigame, mcmgp]
+permissions:
+  mcmgp.admin:
+    description: Minigame admin commands
+    default: op
+  mcmgp.admin.debug:
+    description: Minigame debug/simulation commands
+    default: op
