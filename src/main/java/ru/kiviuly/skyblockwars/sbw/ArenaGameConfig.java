@@ -35,21 +35,28 @@ public class ArenaGameConfig
     private Location center;          // центр арены (/sbw setcenter)
     private int radius;               // радиус кольца спавнов
     private EpochMode epochMode;
+    private int matchSeconds;         // длительность обычной фазы матча
+    private int fightSeconds;         // длительность схватки после слома блоков
     private final List<Epoch> epochs = new ArrayList<>();
 
     private ArenaGameConfig(String arenaId) {this.arenaId = arenaId;}
 
-    public static ArenaGameConfig load(String arenaId, File file, int defaultRadius, EpochMode defaultMode)
+    public static ArenaGameConfig load(String arenaId, File file, int defaultRadius, EpochMode defaultMode,
+        int defaultMatchSeconds, int defaultFightSeconds)
     {
         ArenaGameConfig c = new ArenaGameConfig(arenaId);
         c.radius = Math.max(1, defaultRadius);
         c.epochMode = defaultMode;
+        c.matchSeconds = Math.max(1, defaultMatchSeconds);
+        c.fightSeconds = Math.max(0, defaultFightSeconds);
         if (file.exists())
         {
             YamlConfiguration y = YamlConfiguration.loadConfiguration(file);
             c.center = y.getLocation("center");
             c.radius = Math.max(1, y.getInt("radius", c.radius));
             c.epochMode = parseMode(y.getString("epoch-mode"), defaultMode);
+            c.matchSeconds = Math.max(1, y.getInt("match-seconds", c.matchSeconds));
+            c.fightSeconds = Math.max(0, y.getInt("fight-seconds", c.fightSeconds));
             loadEpochs(c, y);
         }
         return c;
@@ -61,6 +68,8 @@ public class ArenaGameConfig
         y.set("center", center);
         y.set("radius", radius);
         y.set("epoch-mode", epochMode.name());
+        y.set("match-seconds", matchSeconds);
+        y.set("fight-seconds", fightSeconds);
         saveEpochs(y);
         try {file.getParentFile().mkdirs(); y.save(file);}
         catch (IOException e) {throw new RuntimeException("Failed to save SBW game config " + arenaId, e);}
@@ -162,6 +171,10 @@ public class ArenaGameConfig
     public void setRadius(int radius) {this.radius = Math.max(1, radius);}
     public EpochMode getEpochMode() {return epochMode;}
     public void setEpochMode(EpochMode epochMode) {this.epochMode = epochMode;}
+    public int getMatchSeconds() {return matchSeconds;}
+    public void setMatchSeconds(int matchSeconds) {this.matchSeconds = Math.max(1, matchSeconds);}
+    public int getFightSeconds() {return fightSeconds;}
+    public void setFightSeconds(int fightSeconds) {this.fightSeconds = Math.max(0, fightSeconds);}
 
     /** Изменяемый список эпох арены (порядок = последовательность эпох). */
     public List<Epoch> epochs() {return epochs;}

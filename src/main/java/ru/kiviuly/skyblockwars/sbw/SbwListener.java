@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
 import ru.kiviuly.skyblockwars.game.GamePhase;
 import ru.kiviuly.skyblockwars.game.GameSession;
@@ -48,5 +49,15 @@ public class SbwListener implements Listener
         {
             game.destroyEnemyBlock(s, st, p, owner, e.getBlock()); // чужой якорь — ломается ванильно (дроп атакующему)
         }
+    }
+
+    /** Запомнить блоки, поставленные игроками — на фазе разрушения они хаотично исчезают. */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onPlace(BlockPlaceEvent e)
+    {
+        GameSession s = plugin.arenas().sessionOf(e.getPlayer());
+        if (s == null || s.phase() != GamePhase.RUNNING) {return;}
+        SbwState st = SbwState.of(s);
+        if (st != null) {st.addPlaced(e.getBlock().getLocation());}
     }
 }

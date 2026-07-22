@@ -2,15 +2,18 @@ package ru.kiviuly.skyblockwars.sbw;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -70,7 +73,8 @@ public class SkyBlockWarsGame extends Minigame
     public ArenaGameConfig config(String arenaId)
     {
         String id = arenaId.toUpperCase(Locale.ROOT);
-        return configs.computeIfAbsent(id, k -> ArenaGameConfig.load(k, dataFile(k), defaultRadius(), defaultMode()));
+        return configs.computeIfAbsent(id, k -> ArenaGameConfig.load(k, dataFile(k),
+            defaultRadius(), defaultMode(), defaultMatchSeconds(), defaultFightSeconds()));
     }
 
     public void saveConfig(ArenaGameConfig cfg) {cfg.save(dataFile(cfg.arenaId()));}
@@ -78,6 +82,9 @@ public class SkyBlockWarsGame extends Minigame
     private File dataFile(String arenaId) {return new File(new File(plugin.getDataFolder(), "game"), arenaId + ".yml");}
 
     private int defaultRadius() {return Math.max(1, plugin.getConfig().getInt("skyblockwars.radius-default", 40));}
+    private int defaultMatchSeconds() {return Math.max(1, plugin.getConfig().getInt("skyblockwars.match-seconds", 1800));}
+    private int defaultFightSeconds() {return Math.max(0, plugin.getConfig().getInt("skyblockwars.fight-seconds", 300));}
+    private double destructionRate() {return Math.max(0.01, Math.min(1.0, plugin.getConfig().getDouble("skyblockwars.destruction-rate", 0.08)));}
 
     private EpochMode defaultMode()
     {
@@ -122,14 +129,77 @@ public class SkyBlockWarsGame extends Minigame
         st.setOwner(anchor, p.getUniqueId());
         giveKit(p);
         bossBar.add(p);
-        bossBar.update(st, p);
+        bossBar.update(st, p, s.elapsedSeconds());
     }
 
     @Override
     public void onTick(GameSession s)
     {
         SbwState st = SbwState.of(s);
-        if (st != null) {bossBar.updateAll(st, s.alivePlayers());}
+        if (st == null) {return;}
+        int elapsed = s.elapsedSeconds();
+        SbwState.MatchPhase computed = st.phaseAt(elapsed);
+        if (computed != st.getMatchPhase()) {onPhaseChange(s, st, computed);}
+        if (st.getMatchPhase() == SbwState.MatchPhase.DESTRUCTION) {tickDestruction(s, st);}
+        bossBar.updateAll(st, s.alivePlayers(), elapsed);
+    }
+
+    /** Переход фазы матча: обычная → схватка (слом всех блоков) → разрушение арены. */
+    private void onPhaseChange(GameSession s, SbwState st, SbwState.MatchPhase to)
+    {
+        st.setMatchPhase(to);
+        if (to == SbwState.MatchPhase.FIGHT) {enterFight(s, st);}
+        else if (to == SbwState.MatchPhase.DESTRUCTION) {enterDestruction(s, st);}
+    }
+
+    /** Начало схватки: ломаем ВСЕ блоки возрождения, отключаем респавны, даём мягкое падение. */
+    private void enterFight(GameSession s, SbwState st)
+    {
+        for (Location loc : st.ownerLocations()) {loc.getBlock().setType(Material.AIR, false);}
+        st.clearOwners();
+        for (SbwState.PlayerData pd : st.allPlayers())
+        {
+            pd.respawnAlive = false;
+            pd.respawnBlock = null;
+        }
+        for (Player p : s.alivePlayers())
+        {
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 160, 0, false, false, false)); // 8с — не упасть в пустоту сразу
+            p.showTitle(Title.title(Msg.get("sbw.fight-title"), Msg.get("sbw.fight-subtitle")));
+            p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.8f, 1f);
+        }
+        s.broadcast("sbw.fight-begin");
+    }
+
+    /** Начало разрушения арены: поставленные игроками блоки начинают хаотично исчезать. */
+    private void enterDestruction(GameSession s, SbwState st)
+    {
+        for (Player p : s.alivePlayers())
+        {
+            p.showTitle(Title.title(Msg.get("sbw.destruction-title"), Msg.get("sbw.destruction-subtitle")));
+            p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 0.9f, 1f);
+        }
+        s.broadcast("sbw.destruction-begin");
+    }
+
+    /** Каждую секунду фазы разрушения убираем случайную долю оставшихся поставленных блоков. */
+    private void tickDestruction(GameSession s, SbwState st)
+    {
+        Set<Location> placed = st.placedBlocks();
+        if (placed.isEmpty()) {return;}
+        int toRemove = Math.max(1, (int) Math.ceil(placed.size() * destructionRate()));
+        List<Location> list = new ArrayList<>(placed);
+        Collections.shuffle(list);
+        int done = 0;
+        for (Location loc : list)
+        {
+            if (done >= toRemove) {break;}
+            Block b = loc.getBlock();
+            if (!b.getType().isAir()) {b.getWorld().playEffect(b.getLocation(), Effect.STEP_SOUND, b.getType());}
+            b.setType(Material.AIR, false);
+            st.removePlaced(loc);
+            done++;
+        }
     }
 
     @Override
@@ -159,18 +229,33 @@ public class SkyBlockWarsGame extends Minigame
     public List<Component> scoreboardLines(GameSession s, Player viewer)
     {
         SbwState st = SbwState.of(s);
-        // Ядровой сайдбар ОБЩИЙ для всех (viewer здесь == null). Персональный прогресс эпохи —
-        // в боссбаре (per-player). В сайдбаре показываем эпоху только в общем режиме (SHARED).
-        if (st == null || st.mode() != EpochMode.SHARED) {return List.of();}
-        Epoch epoch = st.epochAt(st.sharedEpochIndex());
-        int prog = st.sharedProgress();
-        int goal = epoch != null ? epoch.getThreshold() : 0;
+        if (st == null) {return List.of();}
         List<Component> lines = new ArrayList<>();
-        lines.add(Msg.get("sbw.sidebar-epoch", Msg.ph("epoch", epoch != null ? epoch.getName() : "-")));
-        lines.add(goal > 0
-            ? Msg.get("sbw.sidebar-progress", Msg.ph("prog", prog), Msg.ph("goal", goal))
-            : Msg.get("sbw.sidebar-progress-final", Msg.ph("prog", prog)));
+        int rem = st.phaseRemaining(s.elapsedSeconds());
+        switch (st.getMatchPhase())
+        {
+            case NORMAL -> lines.add(Msg.get("sbw.sidebar-phase-normal", Msg.ph("time", formatTime(rem))));
+            case FIGHT -> lines.add(Msg.get("sbw.sidebar-phase-fight", Msg.ph("time", formatTime(rem))));
+            case DESTRUCTION -> lines.add(Msg.get("sbw.sidebar-phase-destruction"));
+        }
+        // Персональный прогресс эпохи — в боссбаре (viewer тут == null); общий (SHARED) дублируем в сайдбар.
+        if (st.mode() == EpochMode.SHARED)
+        {
+            Epoch epoch = st.epochAt(st.sharedEpochIndex());
+            int prog = st.sharedProgress();
+            int goal = epoch != null ? epoch.getThreshold() : 0;
+            lines.add(Msg.get("sbw.sidebar-epoch", Msg.ph("epoch", epoch != null ? epoch.getName() : "-")));
+            lines.add(goal > 0
+                ? Msg.get("sbw.sidebar-progress", Msg.ph("prog", prog), Msg.ph("goal", goal))
+                : Msg.get("sbw.sidebar-progress-final", Msg.ph("prog", prog)));
+        }
         return lines;
+    }
+
+    private static String formatTime(int seconds)
+    {
+        int sec = Math.max(0, seconds);
+        return String.format("%d:%02d", sec / 60, sec % 60);
     }
 
     // ===== ломание блоков (зовётся из SbwListener) =====
@@ -183,7 +268,7 @@ public class SkyBlockWarsGame extends Minigame
         Epoch epoch = st.currentEpoch(p.getUniqueId());
         placeRespawnBlock(s, block.getLocation(), epoch != null ? epoch.pickRandom() : null);
         p.playSound(p.getLocation(), Sound.BLOCK_STONE_BREAK, 0.6f, 1.2f);
-        bossBar.update(st, p);
+        bossBar.update(st, p, s.elapsedSeconds());
         if (advanced) {p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.4f);}
     }
 
@@ -216,7 +301,7 @@ public class SkyBlockWarsGame extends Minigame
         if (st == null)
         {
             ArenaGameConfig cfg = config(s.arena().getId());
-            st = new SbwState(cfg.getEpochMode(), resolveEpochs(cfg));
+            st = new SbwState(cfg.getEpochMode(), resolveEpochs(cfg), cfg.getMatchSeconds(), cfg.getFightSeconds());
             s.data().put(SbwState.KEY, st);
         }
         return st;
@@ -241,7 +326,7 @@ public class SkyBlockWarsGame extends Minigame
                 st.setSharedProgress(0);
                 Epoch next = st.epochAt(idx + 1);
                 s.broadcast("sbw.epoch-advance-shared", Msg.ph("epoch", next != null ? next.getName() : "-"));
-                bossBar.updateAll(st, s.alivePlayers());
+                bossBar.updateAll(st, s.alivePlayers(), s.elapsedSeconds());
                 return true;
             }
             return false;

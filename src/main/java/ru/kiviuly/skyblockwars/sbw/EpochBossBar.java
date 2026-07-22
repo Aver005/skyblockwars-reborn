@@ -7,14 +7,15 @@ import java.util.UUID;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import ru.kiviuly.skyblockwars.sbw.SbwState.MatchPhase;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
 import ru.kiviuly.skyblockwars.util.Items;
 import ru.kiviuly.skyblockwars.util.Msg;
 
 /**
- * Боссбар прогресса эпох — по одному на игрока. Показывает текущую эпоху и прогресс
- * до рубежа (или «финал», если рубежа нет). В режиме SHARED у всех значения общие,
- * в PERSONAL — свои. Заменяет ядровой босс-бар (в config.yml hud.bossbar: false).
+ * Боссбар матча SkyBlockWars — по одному на игрока. В обычной фазе показывает эпоху и
+ * прогресс до рубежа (в SHARED — общий, в PERSONAL — свой). В схватке — отсчёт до
+ * разрушения, в разрушении — предупреждение. Заменяет ядровой босс-бар (hud.bossbar: false).
  */
 public class EpochBossBar
 {
@@ -34,11 +35,28 @@ public class EpochBossBar
         if (bar != null) {p.hideBossBar(bar);}
     }
 
-    public void update(SbwState st, Player p)
+    public void update(SbwState st, Player p, int elapsed)
     {
         if (st == null || p == null) {return;}
         BossBar bar = bars.get(p.getUniqueId());
         if (bar == null) {return;}
+        MatchPhase phase = st.getMatchPhase();
+        if (phase == MatchPhase.FIGHT)
+        {
+            int rem = Math.max(0, st.phaseRemaining(elapsed));
+            bar.color(BossBar.Color.RED);
+            bar.progress(st.fightSeconds() > 0 ? Math.max(0f, Math.min(1f, rem / (float) st.fightSeconds())) : 0f);
+            bar.name(Items.flat(Msg.get("sbw.bossbar-fight", Msg.ph("time", format(rem)))));
+            return;
+        }
+        if (phase == MatchPhase.DESTRUCTION)
+        {
+            bar.color(BossBar.Color.PURPLE);
+            bar.progress(1f);
+            bar.name(Items.flat(Msg.get("sbw.bossbar-destruction")));
+            return;
+        }
+        // NORMAL — прогресс эпохи
         Epoch epoch = st.currentEpoch(p.getUniqueId());
         int prog = st.progressFor(p.getUniqueId());
         int goal = epoch != null ? epoch.getThreshold() : 0;
@@ -52,14 +70,14 @@ public class EpochBossBar
         else
         {
             bar.progress(1f);
-            bar.color(BossBar.Color.PURPLE);
+            bar.color(BossBar.Color.BLUE);
             bar.name(Items.flat(Msg.get("sbw.bossbar-epoch-final", Msg.ph("epoch", name), Msg.ph("prog", prog))));
         }
     }
 
-    public void updateAll(SbwState st, Iterable<Player> players)
+    public void updateAll(SbwState st, Iterable<Player> players, int elapsed)
     {
-        for (Player p : players) {update(st, p);}
+        for (Player p : players) {update(st, p, elapsed);}
     }
 
     public void clearAll(Iterable<? extends Player> players)
@@ -71,4 +89,6 @@ public class EpochBossBar
         }
         bars.clear();
     }
+
+    private static String format(int seconds) {return String.format("%d:%02d", seconds / 60, seconds % 60);}
 }
