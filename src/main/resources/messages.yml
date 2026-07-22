@@ -225,9 +225,29 @@ admin:
   debuglog-save-fail: "<red>Не удалось сохранить лог (см. консоль)."
   debuglog-status: "<gray>Отладочный лог: <state> <dark_gray>(в буфере <n>)"
 
-# ===== заглушка игры (замени в своей игре) =====
+# ===== заглушка игры (образец) =====
 template-game:
   display-name: "Шаблонная мини-игра"
+
+# ===== SkyBlockWars Reborn =====
+sbw:
+  display-name: "SkyBlockWars Reborn"
+  busy: "<red>Арена <aqua><arena><red> сейчас в матче — настройка недоступна."
+  center-set: "<green>Центр арены <aqua><arena><green> задан. Спавнов по кольцу: <yellow><n> <gray>(радиус <yellow><radius><gray>)."
+  radius-set: "<green>Радиус арены <aqua><arena><green> = <yellow><radius><green>. Спавны перестроены: <yellow><n>."
+  radius-set-no-center: "<yellow>Радиус арены <aqua><arena><yellow> = <yellow><radius><yellow>. Центр не задан — сделай <white>/sbw setcenter <arena></white>."
+  maxplayers-set: "<green>Макс. игроков арены <aqua><arena><green> = <yellow><max><green>. Спавнов по кольцу: <yellow><n>."
+  mode-set: "<green>Режим эпох арены <aqua><arena><green>: <yellow><mode><green>."
+  usage-setcenter: "<yellow>/sbw setcenter <ID> <gray>— центр арены = твоя позиция (спавны встанут по кольцу)."
+  usage-setradius: "<yellow>/sbw setradius <ID> <число|default> <gray>— радиус кольца спавнов."
+  usage-setmaxplayers: "<yellow>/sbw setmaxplayers <ID> <число> <gray>— число игроков (и точек по кольцу)."
+  usage-setmode: "<yellow>/sbw setmode <ID> <personal|shared> <gray>— режим продвижения эпох."
+  help:
+    - "<dark_green>--- SkyBlockWars ---"
+    - "<gray>/sbw setcenter <ID> <gray>— центр арены (кольцо спавнов)"
+    - "<gray>/sbw setradius <ID> <n|default> <gray>— радиус кольца"
+    - "<gray>/sbw setmaxplayers <ID> <n> <gray>— число игроков"
+    - "<gray>/sbw setmode <ID> personal|shared <gray>— режим эпох"
 
 # ===== справка =====
 help:

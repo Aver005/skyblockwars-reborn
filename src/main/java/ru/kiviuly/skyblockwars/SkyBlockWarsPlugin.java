@@ -6,12 +6,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 import ru.kiviuly.skyblockwars.arena.ArenaManager;
 import ru.kiviuly.skyblockwars.command.MinigameCommand;
 import ru.kiviuly.skyblockwars.game.Minigame;
-import ru.kiviuly.skyblockwars.game.TemplateGame;
 import ru.kiviuly.skyblockwars.listener.ChatListener;
 import ru.kiviuly.skyblockwars.listener.GameListener;
 import ru.kiviuly.skyblockwars.listener.ProtectionListener;
 import ru.kiviuly.skyblockwars.listener.SetupListener;
 import ru.kiviuly.skyblockwars.menu.MenuListener;
+import ru.kiviuly.skyblockwars.sbw.SkyBlockWarsGame;
 import ru.kiviuly.skyblockwars.stats.StatsRepository;
 import ru.kiviuly.skyblockwars.util.DebugLog;
 import ru.kiviuly.skyblockwars.util.DebugLog.Cat;
@@ -42,8 +42,8 @@ public final class SkyBlockWarsPlugin extends JavaPlugin
         try {statsRepository.open();}
         catch (SQLException e) {getLogger().severe("Failed to open stats.db: " + e.getMessage());}
 
-        // >>> ТОЧКА РАСШИРЕНИЯ: подключи свою игру вместо TemplateGame <<<
-        game = new TemplateGame(this);
+        // >>> ТОЧКА РАСШИРЕНИЯ: игра SkyBlockWars Reborn (заглушка TemplateGame оставлена как образец) <<<
+        game = new SkyBlockWarsGame(this);
 
         arenaManager.loadAll();
 

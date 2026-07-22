@@ -34,3 +34,11 @@ hud:
 debug-log:
   enabled: false
   console: true
+
+# ===== SkyBlockWars Reborn =====
+# Игро-специфичные значения по умолчанию. Per-arena данные (центр/радиус/режим/эпохи)
+# хранятся отдельно — в plugins/SkyBlockWars/game/<ID>.yml — и правятся командами /sbw
+# и GUI редактора эпох. Здесь — только дефолты для новых арен.
+skyblockwars:
+  radius-default: 40            # радиус кольца спавнов (/sbw setradius <ID> default)
+  epoch-mode-default: personal  # personal = у каждого своя цепочка эпох; shared = общая на арену
