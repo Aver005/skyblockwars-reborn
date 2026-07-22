@@ -80,8 +80,19 @@ public class SkyBlockWarsGame extends Minigame
     public ArenaGameConfig config(String arenaId)
     {
         String id = arenaId.toUpperCase(Locale.ROOT);
-        return configs.computeIfAbsent(id, k -> ArenaGameConfig.load(k, dataFile(k),
-            defaultRadius(), defaultMode(), defaultMatchSeconds(), defaultFightSeconds()));
+        return configs.computeIfAbsent(id, k ->
+        {
+            ArenaGameConfig c = ArenaGameConfig.load(k, dataFile(k),
+                defaultRadius(), defaultMode(), defaultMatchSeconds(), defaultFightSeconds());
+            if (c.epochs().isEmpty())
+            {
+                // Материализуем дефолтные эпохи в game/<ID>.yml, чтобы они были видны и
+                // редактируемы в файле, а не только «в памяти». Один раз при первом обращении.
+                c.epochs().addAll(defaultEpochs());
+                c.save(dataFile(k));
+            }
+            return c;
+        });
     }
 
     public void saveConfig(ArenaGameConfig cfg) {cfg.save(dataFile(cfg.arenaId()));}
