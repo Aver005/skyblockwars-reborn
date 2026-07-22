@@ -243,6 +243,8 @@ sbw:
   usage-setmaxplayers: "<yellow>/sbw setmaxplayers <ID> <число> <gray>— число игроков (и точек по кольцу)."
   usage-setmode: "<yellow>/sbw setmode <ID> <personal|shared> <gray>— режим продвижения эпох."
   usage-epochs: "<yellow>/sbw epochs <ID> <gray>— GUI-редактор эпох (блоки, веса, лут, рубежи, режим)."
+  usage-kit: "<yellow>/sbw kit <ID> <gray>— GUI-редактор стартового набора (что положишь — то и выдаётся)."
+  kit-saved: "<green>Стартовый набор арены <aqua><arena><green> сохранён."
   bossbar-epoch: "<white><epoch> <gray>| рубеж <yellow><prog><gray>/<yellow><goal>"
   bossbar-epoch-final: "<white><epoch> <gray>| <yellow><prog> <gray>сломано (финал)"
   sidebar-epoch: "<gray>Эпоха: <white><epoch>"
@@ -275,6 +277,7 @@ sbw:
     - "<gray>/sbw setmaxplayers <ID> <n> <gray>— число игроков"
     - "<gray>/sbw setmode <ID> personal|shared <gray>— режим эпох"
     - "<gray>/sbw epochs <ID> <gray>— GUI-редактор эпох"
+    - "<gray>/sbw kit <ID> <gray>— GUI-редактор стартового набора"
 
 # ===== SkyBlockWars: GUI редактора эпох =====
 sbwgui:
@@ -329,6 +332,7 @@ sbwgui:
   palette-added: "<green>Блок <yellow><block><green> добавлен в эпоху."
   loot-title: "<dark_gray>Лут контейнера"
   loot-locked: "<dark_gray>—"
+  kit-title: "<dark_gray><b>Стартовый набор</b>"
   threshold-adjust:
     - "<dark_green>ЛКМ +1 <gray>(Shift +10)"
     - "<yellow>ПКМ -1 <gray>(Shift -10), мин. -1 = финал"

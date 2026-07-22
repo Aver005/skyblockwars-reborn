@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -38,6 +40,7 @@ public class ArenaGameConfig
     private int matchSeconds;         // длительность обычной фазы матча
     private int fightSeconds;         // длительность схватки после слома блоков
     private final List<Epoch> epochs = new ArrayList<>();
+    private final Map<Integer, ItemStack> kit = new LinkedHashMap<>(); // стартовый набор (слот→предмет), пусто = дефолт
 
     private ArenaGameConfig(String arenaId) {this.arenaId = arenaId;}
 
@@ -58,6 +61,7 @@ public class ArenaGameConfig
             c.matchSeconds = Math.max(1, y.getInt("match-seconds", c.matchSeconds));
             c.fightSeconds = Math.max(0, y.getInt("fight-seconds", c.fightSeconds));
             loadEpochs(c, y);
+            loadKit(c, y);
         }
         return c;
     }
@@ -71,6 +75,7 @@ public class ArenaGameConfig
         y.set("match-seconds", matchSeconds);
         y.set("fight-seconds", fightSeconds);
         saveEpochs(y);
+        saveKit(y);
         try {file.getParentFile().mkdirs(); y.save(file);}
         catch (IOException e) {throw new RuntimeException("Failed to save SBW game config " + arenaId, e);}
     }
@@ -141,6 +146,28 @@ public class ArenaGameConfig
         }
     }
 
+    // ===== стартовый набор (kit) =====
+
+    private static void loadKit(ArenaGameConfig c, YamlConfiguration y)
+    {
+        ConfigurationSection ks = y.getConfigurationSection("kit");
+        if (ks == null) {return;}
+        for (String slot : ks.getKeys(false))
+        {
+            ItemStack it = ks.getItemStack(slot);
+            if (it == null) {continue;}
+            try {c.kit.put(Integer.parseInt(slot), it);}
+            catch (NumberFormatException ignored) {}
+        }
+    }
+
+    private void saveKit(YamlConfiguration y)
+    {
+        if (kit.isEmpty()) {return;}
+        ConfigurationSection ks = y.createSection("kit");
+        for (Map.Entry<Integer, ItemStack> e : kit.entrySet()) {ks.set(String.valueOf(e.getKey()), e.getValue());}
+    }
+
     /** Ключи секции, отсортированные как числа (0,1,2,…) — порядок эпох/блоков стабилен. */
     private static List<String> sortedNumeric(ConfigurationSection sec)
     {
@@ -178,4 +205,7 @@ public class ArenaGameConfig
 
     /** Изменяемый список эпох арены (порядок = последовательность эпох). */
     public List<Epoch> epochs() {return epochs;}
+
+    /** Изменяемый стартовый набор (слот 0..35 → предмет). Пусто = дефолтный набор. */
+    public Map<Integer, ItemStack> kit() {return kit;}
 }

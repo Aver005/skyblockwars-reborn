@@ -36,6 +36,7 @@ import ru.kiviuly.skyblockwars.sbw.ArenaGameConfig.EpochMode;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
 import ru.kiviuly.skyblockwars.sbw.epoch.EpochBlock;
 import ru.kiviuly.skyblockwars.sbw.menu.EpochListMenu;
+import ru.kiviuly.skyblockwars.sbw.menu.KitEditorMenu;
 import ru.kiviuly.skyblockwars.util.Msg;
 
 /**
@@ -52,7 +53,7 @@ import ru.kiviuly.skyblockwars.util.Msg;
  */
 public class SkyBlockWarsGame extends Minigame
 {
-    private static final List<String> SUBS = List.of("setcenter", "setradius", "setmaxplayers", "setmode", "epochs");
+    private static final List<String> SUBS = List.of("setcenter", "setradius", "setmaxplayers", "setmode", "epochs", "kit");
 
     /** Кэш игро-конфигов арен (ленивая загрузка, сброс на reload). */
     private final Map<String, ArenaGameConfig> configs = new HashMap<>();
@@ -154,7 +155,7 @@ public class SkyBlockWarsGame extends Minigame
         pd.respawnBlock = anchor;
         pd.respawnAlive = true;
         st.setOwner(anchor, p.getUniqueId());
-        giveKit(p);
+        giveKit(s, p);
         st.bossBar().add(p);
         st.bossBar().update(st, p, s.elapsedSeconds());
     }
@@ -253,13 +254,14 @@ public class SkyBlockWarsGame extends Minigame
     {
         SbwState st = SbwState.of(s);
         if (st == null) {return true;}
+        dropInventory(s, p); // вещи выпадают при смерти
         SbwState.PlayerData pd = st.peek(p.getUniqueId());
         if (pd != null && pd.respawnAlive && pd.respawnBlock != null)
         {
-            respawn(s, p, pd);
+            respawn(s, p, pd); // возрождение выдаёт свежий стартовый набор
             return false; // возродили — ядро не выбивает
         }
-        return true; // якоря нет — выбывание
+        return true; // якоря нет — выбывание (пустой спектатор, вещи уже выпали)
     }
 
     @Override
@@ -321,11 +323,11 @@ public class SkyBlockWarsGame extends Minigame
     /** Игрок сломал СВОЙ блок: добыча + прогресс к рубежу + рефилл случайным блоком эпохи. */
     public void mineOwnBlock(GameSession s, SbwState st, Player p, Block block)
     {
-        giveYield(p, block);
+        block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType()); // видимый «слом»: частицы + звук
+        giveYield(s, p, block);
         boolean advanced = advanceProgress(s, st, p);
         Epoch epoch = st.currentEpoch(p.getUniqueId());
         placeRespawnBlock(s, block.getLocation(), epoch != null ? epoch.pickRandom() : null);
-        p.playSound(p.getLocation(), Sound.BLOCK_STONE_BREAK, 0.6f, 1.2f);
         st.bossBar().update(st, p, s.elapsedSeconds());
         if (advanced) {p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.4f);}
     }
@@ -454,20 +456,43 @@ public class SkyBlockWarsGame extends Minigame
         return false;
     }
 
-    /** Добыча блока в инвентарь: контейнер отдаёт своё содержимое, обычный блок — сам себя. */
-    private void giveYield(Player p, Block block)
+    /** Добыча блока ДРОПОМ у игрока (видимый предмет, авто-подбор): контейнер отдаёт лут, обычный блок — сам себя. */
+    private void giveYield(GameSession s, Player p, Block block)
     {
         if (block.getState() instanceof Container c)
         {
             for (ItemStack it : c.getInventory().getContents())
             {
-                if (it != null && !it.getType().isAir()) {giveOrDrop(p, it.clone());}
+                if (it != null && !it.getType().isAir()) {dropTracked(s, p.getLocation(), it.clone());}
             }
         }
         else
         {
-            giveOrDrop(p, new ItemStack(block.getType()));
+            dropTracked(s, p.getLocation(), new ItemStack(block.getType()));
         }
+    }
+
+    /** Уронить предмет с учётом отката матча (удалится в cleanup, если не подобрали). */
+    private void dropTracked(GameSession s, Location loc, ItemStack item)
+    {
+        if (item == null || item.getType().isAir()) {return;}
+        s.trackEntity(loc.getWorld().dropItemNaturally(loc, item));
+    }
+
+    /** Вещи выпадают при смерти (событие смерти отменено ядром — дропаем и чистим сами). */
+    private void dropInventory(GameSession s, Player p)
+    {
+        Location loc = p.getLocation();
+        var inv = p.getInventory();
+        for (ItemStack it : inv.getStorageContents()) {if (it != null) {dropTracked(s, loc, it.clone());}}
+        for (ItemStack it : inv.getArmorContents()) {if (it != null) {dropTracked(s, loc, it.clone());}}
+        dropTracked(s, loc, inv.getItemInOffHand().clone());
+        inv.clear();
+        inv.setHelmet(null);
+        inv.setChestplate(null);
+        inv.setLeggings(null);
+        inv.setBoots(null);
+        inv.setItemInOffHand(null);
     }
 
     /** Поставить/восстановить блок возрождения (+ вложить лут, если контейнер). Помечает для отката. */
@@ -501,6 +526,7 @@ public class SkyBlockWarsGame extends Minigame
         to.setPitch(p.getLocation().getPitch());
         p.teleport(to);
         fullHeal(p);
+        giveKit(s, p); // после дропа вещей на смерти — свежий стартовый набор
         p.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, 4, false, false, false)); // 3с почти-неуязвимости
         p.playSound(to, Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 0.8f);
         Msg.send(p, "sbw.respawned");
@@ -516,7 +542,22 @@ public class SkyBlockWarsGame extends Minigame
         for (PotionEffect ef : p.getActivePotionEffects()) {p.removePotionEffect(ef.getType());}
     }
 
-    private void giveKit(Player p)
+    /** Выдать стартовый набор арены (из GUI-редактора) либо дефолтный, если не настроен. */
+    private void giveKit(GameSession s, Player p)
+    {
+        Map<Integer, ItemStack> kit = config(s.arena().getId()).kit();
+        if (kit.isEmpty()) {giveDefaultKit(p); return;}
+        for (Map.Entry<Integer, ItemStack> e : kit.entrySet())
+        {
+            ItemStack it = e.getValue().clone();
+            if (tryEquipArmor(p, it)) {continue;} // броню из набора авто-надеваем
+            int slot = e.getKey();
+            if (slot >= 0 && slot < 36) {p.getInventory().setItem(slot, it);}
+            else {p.getInventory().addItem(it);}
+        }
+    }
+
+    private void giveDefaultKit(Player p)
     {
         p.getInventory().addItem(
             new ItemStack(Material.STONE_SWORD),
@@ -526,13 +567,18 @@ public class SkyBlockWarsGame extends Minigame
             new ItemStack(Material.COOKED_BEEF, 16));
     }
 
-    private void giveOrDrop(Player p, ItemStack item)
+    private boolean tryEquipArmor(Player p, ItemStack it)
     {
-        for (ItemStack rem : p.getInventory().addItem(item).values())
-        {
-            p.getWorld().dropItemNaturally(p.getLocation(), rem);
-        }
+        var inv = p.getInventory();
+        String n = it.getType().name();
+        if (n.endsWith("_HELMET") && isAir(inv.getHelmet())) {inv.setHelmet(it); return true;}
+        if (n.endsWith("_CHESTPLATE") && isAir(inv.getChestplate())) {inv.setChestplate(it); return true;}
+        if (n.endsWith("_LEGGINGS") && isAir(inv.getLeggings())) {inv.setLeggings(it); return true;}
+        if (n.endsWith("_BOOTS") && isAir(inv.getBoots())) {inv.setBoots(it); return true;}
+        return false;
     }
+
+    private static boolean isAir(ItemStack it) {return it == null || it.getType().isAir();}
 
     /** Эпохи по умолчанию — чтобы игра работала до настройки арены (образец: 3 эпохи, есть контейнер). */
     public List<Epoch> defaultEpochs()
@@ -573,6 +619,7 @@ public class SkyBlockWarsGame extends Minigame
             case "setmaxplayers" -> {return cmdSetMaxPlayers(p, args);}
             case "setmode" -> {return cmdSetMode(p, args);}
             case "epochs" -> {return cmdEpochs(p, args);}
+            case "kit" -> {return cmdKit(p, args);}
             default -> {return false;}
         }
     }
@@ -582,6 +629,14 @@ public class SkyBlockWarsGame extends Minigame
         Arena arena = setupArena(p, args, "sbw.usage-epochs");
         if (arena == null) {return true;}
         new EpochListMenu(plugin, this, arena, config(arena.getId())).open(p);
+        return true;
+    }
+
+    private boolean cmdKit(Player p, String[] args)
+    {
+        Arena arena = setupArena(p, args, "sbw.usage-kit");
+        if (arena == null) {return true;}
+        new KitEditorMenu(plugin, this, arena, config(arena.getId())).open(p);
         return true;
     }
 
