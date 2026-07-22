@@ -47,6 +47,7 @@ public class SbwState
     private final EpochBossBar bossBar = new EpochBossBar(); // per-match — не в полях Minigame
     private int sharedEpochIndex = 0;
     private int sharedProgress = 0;
+    private int startedCount = 0;   // сколько игроков было на старте (для условия победы)
     private MatchPhase matchPhase = MatchPhase.NORMAL;
 
     public SbwState(EpochMode mode, List<Epoch> epochs, int matchSeconds, int fightSeconds)
@@ -89,6 +90,9 @@ public class SbwState
     public void setSharedProgress(int p) {this.sharedProgress = p;}
 
     // ===== фаза матча =====
+
+    public int startedCount() {return startedCount;}
+    public void setStartedCount(int startedCount) {this.startedCount = startedCount;}
 
     public MatchPhase getMatchPhase() {return matchPhase;}
     public void setMatchPhase(MatchPhase phase) {this.matchPhase = phase;}

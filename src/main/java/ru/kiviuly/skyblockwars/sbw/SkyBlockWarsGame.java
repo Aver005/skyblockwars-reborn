@@ -118,8 +118,28 @@ public class SkyBlockWarsGame extends Minigame
     {
         announceLobbyWinner(s);
         SbwState st = ensureState(s);
+        st.setStartedCount(s.players().size()); // с кем начали — чтобы соло-игра не завершалась мгновенно
         Epoch first = st.epochAt(0);
         s.broadcast("sbw.match-begin", Msg.ph("epoch", first != null ? first.getName() : "-"));
+    }
+
+    /**
+     * Условие победы. «Последний выживший» побеждает ТОЛЬКО если матч начинали 2+
+     * игрока. Соло-игра (форс-старт с одним) не заканчивается сама — игрок играет,
+     * пока не выйдет или не проиграет (умрёт без якоря). Матч кончается, когда живых 0.
+     */
+    @Override
+    public MatchResult checkResult(GameSession s)
+    {
+        int alive = s.aliveCount();
+        if (alive == 0) {return MatchResult.draw();} // все выбыли/вышли — без победителя
+        SbwState st = SbwState.of(s);
+        int started = st != null ? st.startedCount() : s.players().size();
+        if (started > 1 && alive == 1)
+        {
+            for (MatchPlayer mp : s.players()) {if (mp.isAlive()) {return MatchResult.of(mp.getUuid());}}
+        }
+        return null; // продолжаем
     }
 
     @Override
