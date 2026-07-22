@@ -44,6 +44,7 @@ public class SbwState
     private final Map<UUID, PlayerData> players = new HashMap<>();
     private final Map<Location, UUID> blockOwners = new HashMap<>();
     private final Set<Location> placedBlocks = new LinkedHashSet<>();
+    private final EpochBossBar bossBar = new EpochBossBar(); // per-match — не в полях Minigame
     private int sharedEpochIndex = 0;
     private int sharedProgress = 0;
     private MatchPhase matchPhase = MatchPhase.NORMAL;
@@ -60,6 +61,7 @@ public class SbwState
 
     public EpochMode mode() {return mode;}
     public List<Epoch> epochs() {return epochs;}
+    public EpochBossBar bossBar() {return bossBar;}
 
     public PlayerData player(UUID id) {return players.computeIfAbsent(id, k -> new PlayerData());}
     public PlayerData peek(UUID id) {return players.get(id);}

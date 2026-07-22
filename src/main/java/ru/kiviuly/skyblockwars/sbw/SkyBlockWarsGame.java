@@ -56,7 +56,6 @@ public class SkyBlockWarsGame extends Minigame
 
     /** Кэш игро-конфигов арен (ленивая загрузка, сброс на reload). */
     private final Map<String, ArenaGameConfig> configs = new HashMap<>();
-    private final EpochBossBar bossBar = new EpochBossBar();
 
     public SkyBlockWarsGame(SkyBlockWarsPlugin plugin)
     {
@@ -136,8 +135,8 @@ public class SkyBlockWarsGame extends Minigame
         pd.respawnAlive = true;
         st.setOwner(anchor, p.getUniqueId());
         giveKit(p);
-        bossBar.add(p);
-        bossBar.update(st, p, s.elapsedSeconds());
+        st.bossBar().add(p);
+        st.bossBar().update(st, p, s.elapsedSeconds());
     }
 
     @Override
@@ -154,7 +153,7 @@ public class SkyBlockWarsGame extends Minigame
             int destrElapsed = elapsed - (st.matchSeconds() + st.fightSeconds());
             if (destrElapsed >= destructionMaxSeconds() && s.alivePlayers().size() > 1) {suddenDeath(s);}
         }
-        bossBar.updateAll(st, s.alivePlayers(), elapsed);
+        st.bossBar().updateAll(st, s.alivePlayers(), elapsed);
     }
 
     /** Переход фазы матча: обычная → схватка (слом всех блоков) → разрушение арены. */
@@ -168,13 +167,7 @@ public class SkyBlockWarsGame extends Minigame
     /** Начало схватки: ломаем ВСЕ блоки возрождения, отключаем респавны, даём мягкое падение. */
     private void enterFight(GameSession s, SbwState st)
     {
-        for (Location loc : st.ownerLocations()) {loc.getBlock().setType(Material.AIR, false);}
-        st.clearOwners();
-        for (SbwState.PlayerData pd : st.allPlayers())
-        {
-            pd.respawnAlive = false;
-            pd.respawnBlock = null;
-        }
+        breakAllAnchors(st);
         for (Player p : s.alivePlayers())
         {
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 160, 0, false, false, false)); // 8с — не упасть в пустоту сразу
@@ -187,6 +180,7 @@ public class SkyBlockWarsGame extends Minigame
     /** Начало разрушения арены: поставленные игроками блоки начинают хаотично исчезать. */
     private void enterDestruction(GameSession s, SbwState st)
     {
+        breakAllAnchors(st); // на случай fight-seconds=0 (схватку проскочили) — гарантированно без респавнов
         for (Player p : s.alivePlayers())
         {
             p.showTitle(Title.title(Msg.get("sbw.destruction-title"), Msg.get("sbw.destruction-subtitle")));
@@ -195,10 +189,23 @@ public class SkyBlockWarsGame extends Minigame
         s.broadcast("sbw.destruction-begin");
     }
 
-    /** Аварийное завершение затянувшегося разрушения: добить оставшихся (якорей нет — выбывание). */
+    /** Сломать все блоки возрождения и отключить респавны (идемпотентно). */
+    private void breakAllAnchors(SbwState st)
+    {
+        for (Location loc : st.ownerLocations()) {loc.getBlock().setType(Material.AIR, false);}
+        st.clearOwners();
+        for (SbwState.PlayerData pd : st.allPlayers())
+        {
+            pd.respawnAlive = false;
+            pd.respawnBlock = null;
+        }
+    }
+
+    /** Аварийное завершение затянувшегося разрушения: выбить всех, кроме одного — оставшийся победит. */
     private void suddenDeath(GameSession s)
     {
-        for (Player p : new ArrayList<>(s.alivePlayers())) {p.damage(1000.0);}
+        List<Player> alive = new ArrayList<>(s.alivePlayers());
+        for (int i = 0; i < alive.size() - 1; i++) {s.eliminate(alive.get(i), true);}
     }
 
     /** Каждую секунду фазы разрушения убираем случайную долю оставшихся поставленных блоков. */
@@ -229,20 +236,32 @@ public class SkyBlockWarsGame extends Minigame
         SbwState.PlayerData pd = st.peek(p.getUniqueId());
         if (pd != null && pd.respawnAlive && pd.respawnBlock != null)
         {
-            respawn(p, pd);
+            respawn(s, p, pd);
             return false; // возродили — ядро не выбивает
         }
         return true; // якоря нет — выбывание
     }
 
     @Override
-    public void onPlayerEliminated(GameSession s, MatchPlayer mp) {bossBar.remove(Bukkit.getPlayer(mp.getUuid()));}
+    public void onPlayerEliminated(GameSession s, MatchPlayer mp)
+    {
+        SbwState st = SbwState.of(s);
+        if (st != null) {st.bossBar().remove(Bukkit.getPlayer(mp.getUuid()));}
+    }
 
     @Override
-    public void onPlayerRemoved(GameSession s, UUID id) {bossBar.remove(Bukkit.getPlayer(id));}
+    public void onPlayerRemoved(GameSession s, UUID id)
+    {
+        SbwState st = SbwState.of(s);
+        if (st != null) {st.bossBar().remove(Bukkit.getPlayer(id));}
+    }
 
     @Override
-    public void onEnd(GameSession s, MatchResult result) {bossBar.clearAll(s.onlinePlayers());}
+    public void onCleanup(GameSession s)
+    {
+        SbwState st = SbwState.of(s);
+        if (st != null) {st.bossBar().clearAll();} // надёжно при любом завершении (в т.ч. форс-стоп/reload)
+    }
 
     @Override
     public List<Component> scoreboardLines(GameSession s, Player viewer)
@@ -287,7 +306,7 @@ public class SkyBlockWarsGame extends Minigame
         Epoch epoch = st.currentEpoch(p.getUniqueId());
         placeRespawnBlock(s, block.getLocation(), epoch != null ? epoch.pickRandom() : null);
         p.playSound(p.getLocation(), Sound.BLOCK_STONE_BREAK, 0.6f, 1.2f);
-        bossBar.update(st, p, s.elapsedSeconds());
+        st.bossBar().update(st, p, s.elapsedSeconds());
         if (advanced) {p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.4f);}
     }
 
@@ -301,6 +320,11 @@ public class SkyBlockWarsGame extends Minigame
             od.respawnBlock = null;
         }
         st.removeOwner(block.getLocation());
+        // Событие отменено в SbwListener — убираем блок сами, БЕЗ ванильного дропа, чтобы лут
+        // контейнера-якоря не «утекал» несобираемыми предметами (их откат не ведёт).
+        s.rememberBlock(block);
+        block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType());
+        block.setType(Material.AIR, false);
         Player ownerP = Bukkit.getPlayer(owner);
         String ownerName = ownerP != null ? ownerP.getName() : owner.toString().substring(0, 8);
         s.broadcast("sbw.block-destroyed", Msg.ph("breaker", breaker.getName()), Msg.ph("victim", ownerName));
@@ -309,7 +333,6 @@ public class SkyBlockWarsGame extends Minigame
             ownerP.showTitle(Title.title(Msg.get("sbw.your-block-title"), Msg.get("sbw.your-block-subtitle")));
             ownerP.playSound(ownerP.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.7f, 1.2f);
         }
-        // блок ломается ванильно (событие не отменяли) — дроп достаётся атакующему
     }
 
     // ===== лобби-дуэль (разминка без последствий) =====
@@ -391,7 +414,7 @@ public class SkyBlockWarsGame extends Minigame
                 st.setSharedProgress(0);
                 Epoch next = st.epochAt(idx + 1);
                 s.broadcast("sbw.epoch-advance-shared", Msg.ph("epoch", next != null ? next.getName() : "-"));
-                bossBar.updateAll(st, s.alivePlayers(), s.elapsedSeconds());
+                st.bossBar().updateAll(st, s.alivePlayers(), s.elapsedSeconds());
                 return true;
             }
             return false;
@@ -445,8 +468,14 @@ public class SkyBlockWarsGame extends Minigame
         }
     }
 
-    private void respawn(Player p, SbwState.PlayerData pd)
+    private void respawn(GameSession s, Player p, SbwState.PlayerData pd)
     {
+        Block anchor = pd.respawnBlock.getBlock();
+        if (anchor.getType().isAir()) // якорь мог осыпаться (гравитационный блок) — восстановим опору
+        {
+            s.rememberBlock(anchor);
+            anchor.setType(Material.STONE, false);
+        }
         Location to = pd.respawnBlock.clone().add(0.5, 1.0, 0.5);
         to.setYaw(p.getLocation().getYaw());
         to.setPitch(p.getLocation().getPitch());

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.kiviuly.skyblockwars.sbw.SbwState.MatchPhase;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
@@ -80,12 +81,13 @@ public class EpochBossBar
         for (Player p : players) {update(st, p, elapsed);}
     }
 
-    public void clearAll(Iterable<? extends Player> players)
+    /** Скрыть и забыть все бары — по собственной карте (не зависит от списка игроков сессии). */
+    public void clearAll()
     {
-        for (Player p : players)
+        for (Map.Entry<UUID, BossBar> e : bars.entrySet())
         {
-            BossBar bar = bars.get(p.getUniqueId());
-            if (bar != null) {p.hideBossBar(bar);}
+            Player p = Bukkit.getPlayer(e.getKey());
+            if (p != null) {p.hideBossBar(e.getValue());}
         }
         bars.clear();
     }

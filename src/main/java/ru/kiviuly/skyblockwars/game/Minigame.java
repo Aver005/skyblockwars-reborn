@@ -49,6 +49,13 @@ public abstract class Minigame
     public void onPlayerRemoved(GameSession s, java.util.UUID id) {}
 
     /**
+     * Матч полностью завершён и откачен — НОРМАЛЬНО или форс-стопом (/stop, reload,
+     * remove, shutdown). Зовётся ядром в конце {@link GameSession} cleanup. Подчисти
+     * per-match ресурсы игры (боссбары, задачи), которые {@link #onEnd} мог не покрыть.
+     */
+    public void onCleanup(GameSession s) {}
+
+    /**
      * Условие завершения. Верни не-null, чтобы закончить матч, иначе null (продолжаем).
      * По умолчанию — «последний выживший, или ничья по истечении времени».
      */

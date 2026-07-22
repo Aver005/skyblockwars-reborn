@@ -48,7 +48,8 @@ public class SbwListener implements Listener
         }
         else
         {
-            game.destroyEnemyBlock(s, st, p, owner, e.getBlock()); // чужой якорь — ломается ванильно (дроп атакующему)
+            e.setCancelled(true); // чужой якорь убираем сами (без ванильного дропа лута)
+            game.destroyEnemyBlock(s, st, p, owner, e.getBlock());
         }
     }
 

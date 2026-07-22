@@ -431,6 +431,7 @@ public class GameSession
         editedBlocks.clear();
         spawnedEntities.clear();
         if (bossBar != null) {bossBar.clearAll();}
+        game.onCleanup(this); // per-match ресурсы игры (напр. свои боссбары) — при любом завершении
 
         arena.setSession(null);
         DebugLog.log(Cat.SESSION, "cleanup arena=%s blocks=%d entities=%d", arena.getId(), blocks, entities);
