@@ -58,11 +58,15 @@ if ($NewPkgPath -ne $OldPkgPath) {
     $newParent = Split-Path "src/main/java/$NewPkgPath" -Parent
     New-Item -ItemType Directory -Force -Path $newParent | Out-Null
     Move-Item "src/main/java/$OldPkgPath" "src/main/java/$NewPkgPath"
+    # Подчистить осиротевшие пустые каталоги старого пакета. ВАЖНО: удаляем ТОЛЬКО
+    # каталоги без файлов — иначе новый пакет под тем же префиксом (напр.
+    # ru.kiviuly.skyblockwars остаётся под src/main/java/ru) был бы снесён.
     Get-ChildItem 'src/main/java/ru' -Recurse -Directory -ErrorAction SilentlyContinue |
         Where-Object { @(Get-ChildItem $_.FullName -Recurse -File).Count -eq 0 } |
         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-    if (Test-Path 'src/main/java/ru') {
-        try { Remove-Item 'src/main/java/ru' -Recurse -ErrorAction Stop } catch {}
+    if ((Test-Path 'src/main/java/ru') -and
+        (@(Get-ChildItem 'src/main/java/ru' -Recurse -File).Count -eq 0)) {
+        try { Remove-Item 'src/main/java/ru' -Recurse -Force -ErrorAction Stop } catch {}
     }
 }
 
