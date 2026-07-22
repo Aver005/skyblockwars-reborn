@@ -9,7 +9,7 @@ arena-defaults:
   max-players: 12
   lobby-countdown-seconds: 20     # отсчёт в лобби до старта, когда набран минимум
   countdown-full-seconds: 5       # укороченный отсчёт, когда лобби заполнено
-  match-duration-seconds: 600     # 0 = без лимита времени (матч до победителя)
+  match-duration-seconds: 0       # 0 = ядро не ограничивает; фазовый таймер матча ведёт сама игра (см. skyblockwars)
 
 # Поведение матча (общее для всех игр на этом сервере).
 match:
@@ -28,7 +28,7 @@ chat:
 # HUD (если модуль включён): сайдбар и босс-бар матча.
 hud:
   scoreboard: true
-  bossbar: true
+  bossbar: false   # SkyBlockWars рисует СВОЙ босс-бар прогресса эпох (per-player) — ядровой выключен
 
 # Отладочный лог: [DBG] в консоль на ключевые действия (ASCII).
 debug-log:

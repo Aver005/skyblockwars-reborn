@@ -361,6 +361,7 @@ public class GameSession
         plugin.arenas().unbind(p.getUniqueId());
         if (bossBar != null) {bossBar.remove(p);}
         if (scoreboard != null) {scoreboard.remove(p);}
+        game.onPlayerRemoved(this, p.getUniqueId());
 
         if (p.isOnline())
         {

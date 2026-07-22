@@ -45,6 +45,9 @@ public abstract class Minigame
     /** Игрок выбыл (умер) — уже переведён в спектаторы. */
     public void onPlayerEliminated(GameSession s, MatchPlayer mp) {}
 
+    /** Игрок покинул сессию (leave/quit, не выбывание) — подчистить per-player UI/состояние. */
+    public void onPlayerRemoved(GameSession s, java.util.UUID id) {}
+
     /**
      * Условие завершения. Верни не-null, чтобы закончить матч, иначе null (продолжаем).
      * По умолчанию — «последний выживший, или ничья по истечении времени».
