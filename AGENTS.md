@@ -1,4 +1,4 @@
-# mcmgp-template
+# skyblockwars-reborn
 
 Шаблон платформы мини-игр для Paper (Java 25, Paper 26.1.2, Gradle). Каркас +
 абстрактный `Minigame`; конкретной игры внутри нет.

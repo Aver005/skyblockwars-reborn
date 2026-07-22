@@ -1,8 +1,8 @@
-plugins {
+﻿plugins {
     java
 }
 
-group = "ru.kiviuly"
+group = "ru.kiviuly.skyblockwars"
 version = "1.0.0"
 
 java {
@@ -33,12 +33,12 @@ tasks.processResources {
 }
 
 tasks.jar {
-    archiveBaseName.set("MCMGP")
+    archiveBaseName.set("SkyBlockWars")
 }
 
-// Сборка + копирование jar в тестовый сервер:
+// Ð¡Ð±Ð¾Ñ€ÐºÐ° + ÐºÐ¾Ð¿Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ jar Ð² Ñ‚ÐµÑÑ‚Ð¾Ð²Ñ‹Ð¹ ÑÐµÑ€Ð²ÐµÑ€:
 //   ./gradlew deploy -PdeployDir=C:/Servers/test/plugins
-// Без -PdeployDir копирует в build/deploy (просто чтобы задача не падала).
+// Ð‘ÐµÐ· -PdeployDir ÐºÐ¾Ð¿Ð¸Ñ€ÑƒÐµÑ‚ Ð² build/deploy (Ð¿Ñ€Ð¾ÑÑ‚Ð¾ Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð·Ð°Ð´Ð°Ñ‡Ð° Ð½Ðµ Ð¿Ð°Ð´Ð°Ð»Ð°).
 tasks.register<Copy>("deploy") {
     dependsOn(tasks.jar)
     from(tasks.jar.map { it.archiveFile })

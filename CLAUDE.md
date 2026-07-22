@@ -1,9 +1,9 @@
-# MCMGP — читай и работай
+# SkyBlockWars — читай и работай
 
 Это **шаблон** платформы мини-игр (Paper 26.1.2, Java 25, Gradle). Готовый каркас:
 арены, жизненный цикл матча, сетап-GUI, снапшоты игроков, откат мира, SQLite-стата,
 HUD. Игры внутри нет — только абстрактный `Minigame` и заглушка `TemplateGame`.
-Package root: `ru.kiviuly.mcmgp`. Твоя задача — двигать каркас, не ломая рабочее.
+Package root: `ru.kiviuly.skyblockwars`. Твоя задача — двигать каркас, не ломая рабочее.
 
 ## Порядок действий — без самодеятельности
 
@@ -18,7 +18,7 @@ Package root: `ru.kiviuly.mcmgp`. Твоя задача — двигать ка�
 - Не тащи в ядро игровую специфику. Правила конкретной игры пишутся **только**
   через наследник `Minigame` (см. `docs/02`), а не хардкодятся в `arena/`, `game/`
   движке, `listener/` и т.п.
-- Точка расширения одна: `Minigame` + регистрация в `McmgpPlugin.onEnable`
+- Точка расширения одна: `Minigame` + регистрация в `SkyBlockWarsPlugin.onEnable`
   (замена `new TemplateGame(this)`). `Minigame` — логика без состояния; состояние
   матча живёт в `GameSession` (`data()` + список `MatchPlayer`).
 - Обобщённые числа игры — в `Arena` через `getSetting/setSetting`, не новые поля
@@ -27,12 +27,12 @@ Package root: `ru.kiviuly.mcmgp`. Твоя задача — двигать ка�
 ## Команды — всё, что нужно
 
 ```bash
-./gradlew build                                   # сборка → build/libs/MCMGP-1.0.0.jar
+./gradlew build                                   # сборка → build/libs/SkyBlockWars-1.0.0.jar
 ./gradlew deploy -PdeployDir=<server>/plugins     # сборка + jar в тестовый сервер
 ```
 
 JDK 25 скачается сам (toolchain + foojay-resolver). Успех: строка
-`[MCMGP] MCMGP enabled` в логе и **ноль** стектрейсов. Не запустил и не проверил —
+`[SkyBlockWars] SkyBlockWars enabled` в логе и **ноль** стектрейсов. Не запустил и не проверил —
 значит не сделал.
 
 ## Железные правила (инварианты)
@@ -58,7 +58,7 @@ JDK 25 скачается сам (toolchain + foojay-resolver). Успех: ст
 ## Что считается «сделано»
 
 1. `./gradlew build` (или `deploy`) прошёл — сборка зелёная.
-2. Сервер поднялся, лог чистый (`[MCMGP] MCMGP enabled`, ноль стектрейсов), фича
+2. Сервер поднялся, лог чистый (`[SkyBlockWars] SkyBlockWars enabled`, ноль стектрейсов), фича
    проверена руками (смоук в игре).
 3. `.memories/STATE.md` обновлён; при накоплении истории — запись в
    `.memories/JOURNAL/YYYY-MM-DD.md`.

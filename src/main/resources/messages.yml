@@ -1,5 +1,5 @@
 # ============================================================================
-#  MCMGP — тексты игрокам (MiniMessage). Единственный источник строк для игрока.
+#  SkyBlockWars — тексты игрокам (MiniMessage). Единственный источник строк для игрока.
 #  Плейсхолдеры <n>/<arena>/<player>/... не должны совпадать с именами тегов.
 # ============================================================================
 
@@ -15,7 +15,7 @@ errors:
   arena-exists: "<red>Арена <aqua><arena><red> уже существует."
   need-args: "<red>Недостаточно аргументов."
   not-a-number: "<red>Нужно число."
-  unknown-sub: "<red>Неизвестная подкоманда. /mg help"
+  unknown-sub: "<red>Неизвестная подкоманда. /sbw help"
   no-permission: "<red>Нет прав."
 
 # ===== игровой цикл =====
@@ -40,12 +40,12 @@ game:
   winner: "<gold><b>Победитель: <yellow><winner></b>"
   draw: "<gray><b>Ничья.</b>"
 
-# ===== выбор арены (/mg) =====
+# ===== выбор арены (/sbw) =====
 select:
   title: "<dark_gray><b>Мини-игры</b>"
   empty-name: "<gray>Арен нет"
   empty-lore:
-    - "<gray>Админ: /mg create <ID>"
+    - "<gray>Админ: /sbw create <ID>"
   status-disabled: "<red>выключена"
   status-idle: "<green>ожидание"
   status-running: "<yellow>идёт матч"
@@ -53,7 +53,7 @@ select:
   lore-players: "<gray>Игроки: <yellow><current><gray>/<yellow><max>"
   lore-join: "<yellow>► ЛКМ — войти"
 
-# ===== хаб настройки (/mg gui) =====
+# ===== хаб настройки (/sbw gui) =====
 hub:
   title: "<dark_gray><b>Настройка: </b>"
   close-name: "<red>Закрыть"
@@ -154,7 +154,7 @@ hud:
   bossbar-running: "<white>В игре: <green><alive> <gray>| <white>Время: <yellow><time>"
   bossbar-lobby: "<yellow>Ожидание игроков: <white><n><gray>/<white><max>"
 
-# ===== статистика (/mg stats) =====
+# ===== статистика (/sbw stats) =====
 stats:
   not-found: "<gray>По игроку <white><player><gray> нет статистики."
   header: "<dark_green>===== <white><player> <dark_green>====="
@@ -170,8 +170,8 @@ check:
   mark-warning: "<yellow>[ПРЕД] "
   mark-good: "<green>[ОК] "
   world: "<red>Мир «<world>» не загружен."
-  no-lobby: "<red>Не задано лобби (/mg setlobby)."
-  no-spawns: "<red>Нет точек спавна (/mg addspawn)."
+  no-lobby: "<red>Не задано лобби (/sbw setlobby)."
+  no-spawns: "<red>Нет точек спавна (/sbw addspawn)."
   few-spawns: "<yellow>Спавнов <have>, а мин. игроков <need> — на всех может не хватить."
   player-range: "<yellow>Макс. игроков (<max>) меньше мин. (<min>)."
   good: "<green>Арена готова к включению."
@@ -198,13 +198,13 @@ admin:
   reloaded: "<dark_green>Настройки перезагружены."
   saved: "<dark_green>Сохранено."
   created: "<dark_green>Арена <aqua><arena><dark_green> создана."
-  created-hint: "<gray>Дальше: /mg gui <arena> (лобби, спавны, параметры), затем /mg enable <arena>."
+  created-hint: "<gray>Дальше: /sbw gui <arena> (лобби, спавны, параметры), затем /sbw enable <arena>."
   removed: "<yellow>Арена <aqua><arena><yellow> удалена."
   enabled: "<dark_green>Арена <aqua><arena><dark_green> включена."
   disabled: "<yellow>Арена <aqua><arena><yellow> выключена."
   lobby-set: "<green>Лобби арены <aqua><arena><green> установлено."
   marker-given: "<green>Маркер выдан. ПКМ по блоку — точка."
-  set-usage: "<yellow>/mg set <ID> <minplayers|maxplayers|lobbycountdown|countdownfull|duration> <число>"
+  set-usage: "<yellow>/sbw set <ID> <minplayers|maxplayers|lobbycountdown|countdownfull|duration> <число>"
   set-ok: "<dark_green>Арена <aqua><arena><dark_green>: <yellow><key><dark_green> = <yellow><n><dark_green>."
   name-set: "<dark_green>Имя арены <aqua><arena><dark_green>: <name><dark_green>."
   desc-set: "<dark_green>Описание арены <aqua><arena><dark_green> обновлено."
@@ -232,21 +232,21 @@ template-game:
 # ===== справка =====
 help:
   player:
-    - "<dark_green>===== MCMGP ====="
-    - "<gray>/mg <gray>— выбрать арену и войти"
-    - "<gray>/mg join <ID> <gray>— войти на арену"
-    - "<gray>/mg leave <gray>— выйти"
-    - "<gray>/mg stats [ник] <gray>— статистика"
+    - "<dark_green>===== SkyBlockWars ====="
+    - "<gray>/sbw <gray>— выбрать арену и войти"
+    - "<gray>/sbw join <ID> <gray>— войти на арену"
+    - "<gray>/sbw leave <gray>— выйти"
+    - "<gray>/sbw stats [ник] <gray>— статистика"
   admin:
     - "<dark_green>--- админ ---"
-    - "<gray>/mg create <ID> <gray>— создать арену (мир+лобби здесь)"
-    - "<gray>/mg gui <ID> <gray>— ХАБ настройки (параметры/точки/имя)"
-    - "<gray>/mg setlobby <ID> <gray>— лобби здесь"
-    - "<gray>/mg addspawn <ID> <gray>— маркер спавна (ПКМ по блоку)"
-    - "<gray>/mg set <ID> <ключ> <число> <gray>— параметр"
-    - "<gray>/mg enable|disable <ID> <gray>— вкл/выкл"
-    - "<gray>/mg check <ID> <gray>— валидатор"
-    - "<gray>/mg start|stop <ID> <gray>— форс-старт/стоп"
-    - "<gray>/mg list <gray>— список арен"
-    - "<gray>/mg reload|save <gray>— перезагрузка/сохранение"
-    - "<gray>/mg debuglog on|off|save|clear <gray>— отладочный лог"
+    - "<gray>/sbw create <ID> <gray>— создать арену (мир+лобби здесь)"
+    - "<gray>/sbw gui <ID> <gray>— ХАБ настройки (параметры/точки/имя)"
+    - "<gray>/sbw setlobby <ID> <gray>— лобби здесь"
+    - "<gray>/sbw addspawn <ID> <gray>— маркер спавна (ПКМ по блоку)"
+    - "<gray>/sbw set <ID> <ключ> <число> <gray>— параметр"
+    - "<gray>/sbw enable|disable <ID> <gray>— вкл/выкл"
+    - "<gray>/sbw check <ID> <gray>— валидатор"
+    - "<gray>/sbw start|stop <ID> <gray>— форс-старт/стоп"
+    - "<gray>/sbw list <gray>— список арен"
+    - "<gray>/sbw reload|save <gray>— перезагрузка/сохранение"
+    - "<gray>/sbw debuglog on|off|save|clear <gray>— отладочный лог"

@@ -1,13 +1,13 @@
 # 01 — Архитектура
 
-Как устроено ядро MCMGP и почему. Правила конкретной игры сюда не входят — они
+Как устроено ядро SkyBlockWars и почему. Правила конкретной игры сюда не входят — они
 живут в наследнике `Minigame` (см. [02-making-a-game.md](02-making-a-game.md)).
-Package root: `ru.kiviuly.mcmgp`.
+Package root: `ru.kiviuly.skyblockwars`.
 
 ## Ядро модели
 
 ```
-McmgpPlugin ── bootstrap + wiring; game() возвращает зарегистрированный Minigame
+SkyBlockWarsPlugin ── bootstrap + wiring; game() возвращает зарегистрированный Minigame
    │
    ├─ ArenaManager ── реестр Arena (arenas/<id>.yml) + Map<UUID, GameSession>
    │     │            (кто где играет) + join()/leave()
@@ -32,14 +32,14 @@ McmgpPlugin ── bootstrap + wiring; game() возвращает зареги�
   заспавненные сущности, `data()` — мапа состояния игры.
 - **`Minigame`** — правила твоей игры. Логика **без состояния**: методы-хуки
   получают `GameSession` и работают через его API. Одна инстанция на плагин,
-  регистрируется в `McmgpPlugin.onEnable`.
+  регистрируется в `SkyBlockWarsPlugin.onEnable`.
 
 Разделение простое: **ядро ведёт матч, `Minigame` решает, что этот матч значит.**
 
 ## Жизненный цикл матча
 
 ```
-   /mg join  (первый игрок создаёт GameSession)
+   /sbw join  (первый игрок создаёт GameSession)
         │
         ▼
    ┌──────────┐   набран min-players     ┌────────────┐
@@ -84,10 +84,10 @@ McmgpPlugin ── bootstrap + wiring; game() возвращает зареги�
 
 ## Потоки данных
 
-- **Создание арены**: `/mg create <ID>` → `Arena.create` с дефолтами из
+- **Создание арены**: `/sbw create <ID>` → `Arena.create` с дефолтами из
   `config.yml` (`arena-defaults`). Каждое админ-изменение → `Arena.save` в
   `arenas/<id>.yml` (не держим правки только в памяти).
-- **Точки арены через маркеры**: `/mg addspawn` выдаёт предмет-маркер с PDC-метками
+- **Точки арены через маркеры**: `/sbw addspawn` выдаёт предмет-маркер с PDC-метками
   (`Keys.MARKER_TYPE/MARKER_ARENA/MARKER_EXTRA`). Игрок ставит блок → `SetupListener`
   ловит установку, читает PDC и записывает точку в арену. Титулы/лор не парсятся —
   только PDC (`SetupMarkers` собирает эти предметы).
@@ -96,7 +96,7 @@ McmgpPlugin ── bootstrap + wiring; game() возвращает зареги�
   Файл на диске = страховка от краша: если снапшот есть, а сессии нет, игрока
   восстанавливают при входе на сервер.
 - **Статистика**: `StatsRepository` пишет в `stats.db` (SQLite) в async-задачах;
-  `/mg stats` читает. Колонки — `wins/loses/kills/played` на игрока.
+  `/sbw stats` читает. Колонки — `wins/loses/kills/played` на игрока.
 - **Тексты**: всё игрокам — из `messages.yml` через `Msg` (MiniMessage). Дефолты
   зашиты в jar, поэтому новые ключи работают без ручного слияния после обновления.
 
@@ -120,15 +120,15 @@ McmgpPlugin ── bootstrap + wiring; game() возвращает зареги�
 
 ## Где что лежит (runtime)
 
-Данные плагина — в `plugins/MCMGP/`:
+Данные плагина — в `plugins/SkyBlockWars/`:
 
 ```
-plugins/MCMGP/
+plugins/SkyBlockWars/
 ├── config.yml            общие числа/флаги (см. 03-commands-and-config.md)
 ├── messages.yml          ВСЕ тексты игрокам (MiniMessage)
 ├── arenas/<id>.yml       по файлу на арену
 ├── snapshots/<uuid>.yml  снапшоты игроков в матче (обычно пусто вне матчей)
-├── logs/debug-*.log      выгрузки /mg debuglog save
+├── logs/debug-*.log      выгрузки /sbw debuglog save
 └── stats.db              SQLite-статистика
 ```
 

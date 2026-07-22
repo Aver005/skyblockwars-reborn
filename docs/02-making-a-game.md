@@ -2,7 +2,7 @@
 
 Своя игра пишется в одном месте — наследнике `Minigame`. Ядро (арены, лобби,
 отсчёты, таймер, откат мира, снапшоты игроков, HUD, статистика) уже готово;
-твоё дело — правила. Package root: `ru.kiviuly.mcmgp`.
+твоё дело — правила. Package root: `ru.kiviuly.skyblockwars`.
 
 ## Два шага
 
@@ -10,21 +10,21 @@
 `GameSession` и работают через его API. Состояние матча живёт в сессии, не в полях
 твоего класса (матчей может идти несколько параллельно на разных аренах).
 
-**2. Зарегистрируй инстанцию в `McmgpPlugin.onEnable`** — замени заглушку:
+**2. Зарегистрируй инстанцию в `SkyBlockWarsPlugin.onEnable`** — замени заглушку:
 
 ```java
-// McmgpPlugin.onEnable(), вместо:
+// SkyBlockWarsPlugin.onEnable(), вместо:
 // this.game = new TemplateGame(this);
 this.game = new SpleefGame(this);
 ```
 
 Конструктор наследника делай по образцу `TemplateGame` (обычно принимает
-`McmgpPlugin`). Одна инстанция на плагин; ядро берёт её через `plugin.game()`.
+`SkyBlockWarsPlugin`). Одна инстанция на плагин; ядро берёт её через `plugin.game()`.
 
 ## Каркас класса
 
 ```java
-package ru.kiviuly.mcmgp.game.spleef;
+package ru.kiviuly.skyblockwars.game.spleef;
 
 import java.util.List;
 
@@ -33,17 +33,17 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import ru.kiviuly.mcmgp.McmgpPlugin;
-import ru.kiviuly.mcmgp.game.GameSession;
-import ru.kiviuly.mcmgp.game.MatchPlayer;
-import ru.kiviuly.mcmgp.game.MatchResult;
-import ru.kiviuly.mcmgp.game.Minigame;
-import ru.kiviuly.mcmgp.util.Msg;
+import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
+import ru.kiviuly.skyblockwars.game.GameSession;
+import ru.kiviuly.skyblockwars.game.MatchPlayer;
+import ru.kiviuly.skyblockwars.game.MatchResult;
+import ru.kiviuly.skyblockwars.game.Minigame;
+import ru.kiviuly.skyblockwars.util.Msg;
 
 /** Spleef: ломай пол под соперниками; упал ниже линии — выбыл. */
 public class SpleefGame extends Minigame
 {
-    public SpleefGame(McmgpPlugin plugin)
+    public SpleefGame(SkyBlockWarsPlugin plugin)
     {
         super(plugin);
     }
@@ -149,7 +149,7 @@ s.rememberBlock(block) // ЗАПОМНИ блок ПЕРЕД изменение�
 s.trackEntity(entity)  // зарегистрируй заспавненную сущность — удалится после матча
 s.data()               // Map<String,Object> — состояние игры (см. ниже)
 s.defaultResult()      // стандартный итог: последний живой или ничья
-s.plugin()             // McmgpPlugin (доступ к game(), ArenaManager, StatsRepository)
+s.plugin()             // SkyBlockWarsPlugin (доступ к game(), ArenaManager, StatsRepository)
 ```
 
 ## Где хранить состояние
@@ -180,8 +180,8 @@ int killY   = s.arena().getSetting("kill-y", 60);      // с дефолтом
 int shrinkAt = s.arena().getSetting("shrink-at", 30);
 ```
 
-Админ задаёт их командой `/mg set <ID> kill-y 60` или `±`-редактором в
-`/mg gui <ID>`. Хранятся в секции `settings` файла `arenas/<id>.yml`
+Админ задаёт их командой `/sbw set <ID> kill-y 60` или `±`-редактором в
+`/sbw gui <ID>`. Хранятся в секции `settings` файла `arenas/<id>.yml`
 (см. [03-commands-and-config.md](03-commands-and-config.md)). Ключи — свободные,
 это пространство имён твоей игры.
 
@@ -195,7 +195,7 @@ int shrinkAt = s.arena().getSetting("shrink-at", 30);
 ## Статистика
 
 Пиши итоги через `StatsRepository` (доступен как `s.plugin().stats()` — сверься с
-актуальным геттером в `McmgpPlugin`). Стандартный движок сам инкрементит
+актуальным геттером в `SkyBlockWarsPlugin`). Стандартный движок сам инкрементит
 `played`; победу/поражения/убийства начисляй из `onEnd` / `onPlayerEliminated` по
 правилам своей игры. Прямых SQL-строк вне `StatsRepository` быть не должно.
 

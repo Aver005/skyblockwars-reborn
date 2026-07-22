@@ -1,4 +1,4 @@
-# .memories/ — база знаний MCMGP
+# .memories/ — база знаний SkyBlockWars
 
 Last updated: 2026-07-22 — шаблон развёрнут. Каркас платформы мини-игр
 (arena / lifecycle / menus / setup-GUI / stats / HUD / commands) + абстрактный
@@ -20,7 +20,7 @@ Last updated: 2026-07-22 — шаблон развёрнут. Каркас пл�
 - **Как сделать игру** — [`docs/02-making-a-game.md`](../docs/02-making-a-game.md):
   наследование `Minigame`, разбор хуков, пример `SpleefGame`, состояние в `data()`.
 - **Команды и конфиг** — [`docs/03-commands-and-config.md`](../docs/03-commands-and-config.md):
-  `/mg`, `config.yml`, `arenas/<id>.yml`, `messages.yml`.
+  `/sbw`, `config.yml`, `arenas/<id>.yml`, `messages.yml`.
 - **Обзор проекта** — [`README.md`](../README.md).
 
 ## Легенда статусов

@@ -1,4 +1,4 @@
-# MCMGP — Minecraft Minigame Platform (шаблон)
+# SkyBlockWars — Minecraft Minigame Platform (шаблон)
 
 ![Paper](https://img.shields.io/badge/Paper-26.1.2-blue?style=flat-square)
 ![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square)
@@ -21,11 +21,11 @@ SQLite-статистику и HUD — с одной точкой расшире
   числовых настроек под твою игру. Мультиарена, один YML-файл на арену.
 - **Жизненный цикл матча** — `LOBBY → COUNTDOWN → RUNNING → ENDING` в одном движке
   (`GameSession`): отсчёты, таймер длительности, укороченный старт при полном лобби.
-- **Сетап без правки конфигов руками** — `/mg gui <ID>`: хаб настройки, `±`-редактор
+- **Сетап без правки конфигов руками** — `/sbw gui <ID>`: хаб настройки, `±`-редактор
   чисел, выдача маркеров-предметов для лобби и спавнов, валидатор арены перед включением.
 - **Нулевой след** — снапшот игрока до матча и полный откат мира после (изменённые
   блоки, заспавненные сущности). Игрок не уносит игровые предметы и не теряет свои.
-- **Статистика** — SQLite: победы / поражения / убийства / сыграно, `/mg stats`.
+- **Статистика** — SQLite: победы / поражения / убийства / сыграно, `/sbw stats`.
 - **HUD** — сайдбар и босс-бар с фазой и таймером (включаются в конфиге).
 - **Точка расширения** — `Minigame`: наследуешь, реализуешь хуки, регистрируешь.
   Всё игро-специфичное живёт там; ядро не трогаешь.
@@ -33,21 +33,21 @@ SQLite-статистику и HUD — с одной точкой расшире
 ## Быстрый старт
 
 ```bash
-./gradlew build                                   # jar → build/libs/MCMGP-1.0.0.jar
+./gradlew build                                   # jar → build/libs/SkyBlockWars-1.0.0.jar
 ./gradlew deploy -PdeployDir=<server>/plugins     # сборка + копия в тестовый сервер
 ```
 
 JDK 25 скачается сам (Gradle toolchain + foojay-resolver) — вручную ставить нечего.
 Без `-PdeployDir` задача `deploy` кладёт jar в `build/deploy` (просто чтобы не падать).
 
-Запусти сервер. Успех выглядит так: строка `[MCMGP] MCMGP enabled` в логе и **ноль**
+Запусти сервер. Успех выглядит так: строка `[SkyBlockWars] SkyBlockWars enabled` в логе и **ноль**
 стектрейсов. Дальше — арена без единого конфига руками:
 
 ```
-/mg create arena1        создать арену (мир = твой текущий)
-/mg gui arena1           хаб настройки: лобби, спавны, числа
-/mg check arena1         валидатор — почини CRITICAL
-/mg enable arena1        включить; игроки заходят через /mg или /mg join arena1
+/sbw create arena1        создать арену (мир = твой текущий)
+/sbw gui arena1           хаб настройки: лобби, спавны, числа
+/sbw check arena1         валидатор — почини CRITICAL
+/sbw enable arena1        включить; игроки заходят через /sbw или /sbw join arena1
 ```
 
 **Свою игру** пишут ровно в одном месте — наследник `Minigame`. Полная пошаговая
@@ -55,11 +55,11 @@ JDK 25 скачается сам (Gradle toolchain + foojay-resolver) — вру
 
 ## Структура пакетов
 
-Package root: `ru.kiviuly.mcmgp`.
+Package root: `ru.kiviuly.skyblockwars`.
 
 | Пакет | Назначение |
 |---|---|
-| `util/` | `Keys` (PDC-ключи), `Items` (сборка предметов + `fromSpec` из YML-спеки), `Msg` (каталог `messages.yml`), `DebugLog` (`/mg debuglog`) |
+| `util/` | `Keys` (PDC-ключи), `Items` (сборка предметов + `fromSpec` из YML-спеки), `Msg` (каталог `messages.yml`), `DebugLog` (`/sbw debuglog`) |
 | `arena/` | `Arena` (конфиг площадки), `ArenaManager` (реестр + join/leave), `ArenaCheck` (валидатор), `SetupMarkers` (маркеры точек) |
 | `player/` | `PlayerSnapshot` (снапшот/очистка/откат игрока, переживает рестарт) |
 | `game/` | `GamePhase`, `MatchPlayer`, `MatchResult`, **`Minigame`** (точка расширения), `GameSession` (движок), `TemplateGame` (заглушка) |
@@ -67,8 +67,8 @@ Package root: `ru.kiviuly.mcmgp`.
 | `ui/` | `GameScoreboard` (сайдбар), `GameBossBar` (фаза/таймер) |
 | `menu/` | `Menu` (InventoryHolder) + меню сетапа и выбора арены, `AnvilInputMenu` (ввод текста) |
 | `listener/` | `GameListener`, `ProtectionListener`, `ChatListener`, `SetupListener` |
-| `command/` | `MinigameCommand` (`/mg`) |
-| — | `McmgpPlugin` — bootstrap/wiring; держит зарегистрированный `Minigame` (`game()`), `ArenaManager`, `StatsRepository` |
+| `command/` | `MinigameCommand` (`/sbw`) |
+| — | `SkyBlockWarsPlugin` — bootstrap/wiring; держит зарегистрированный `Minigame` (`game()`), `ArenaManager`, `StatsRepository` |
 
 Подробнее — в [docs/01-architecture.md](docs/01-architecture.md).
 
