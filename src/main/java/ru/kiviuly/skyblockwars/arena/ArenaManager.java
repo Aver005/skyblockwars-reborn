@@ -67,6 +67,7 @@ public class ArenaManager
         Arena arena = Arena.create(id, worldName, plugin.getConfig().getConfigurationSection("arena-defaults"));
         arenas.put(id, arena);
         save(arena);
+        if (plugin.game() != null) {plugin.game().onArenaCreated(arena);} // материализуем игро-конфиг с дефолтами
         return arena;
     }
 

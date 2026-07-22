@@ -31,6 +31,7 @@ public class EpochListMenu extends Menu
     private static final int SLOT_CLOSE = 46;
     private static final int SLOT_ADD = 48;
     private static final int SLOT_MODE = 50;
+    private static final int SLOT_TIME = 52;
 
     private final SkyBlockWarsPlugin plugin;
     private final SkyBlockWarsGame game;
@@ -74,6 +75,22 @@ public class EpochListMenu extends Menu
         inventory.setItem(SLOT_CLOSE, Items.named(Material.BARRIER, Msg.get("hub.close-name")));
         inventory.setItem(SLOT_ADD, Items.named(Material.LIME_DYE, Msg.get("sbwgui.list-add-name"), Msg.getList("sbwgui.list-add-lore")));
         inventory.setItem(SLOT_MODE, modeButton());
+        inventory.setItem(SLOT_TIME, timeButton());
+    }
+
+    private ItemStack timeButton()
+    {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Msg.get("sbwgui.list-time-match", Msg.ph("time", formatTime(cfg.getMatchSeconds()))));
+        lore.add(Msg.get("sbwgui.list-time-fight", Msg.ph("time", formatTime(cfg.getFightSeconds()))));
+        lore.addAll(Msg.getList("sbwgui.list-time-lore"));
+        return Items.named(Material.CLOCK, Msg.get("sbwgui.list-time-name"), lore);
+    }
+
+    private static String formatTime(int seconds)
+    {
+        int sec = Math.max(0, seconds);
+        return String.format("%d:%02d", sec / 60, sec % 60);
     }
 
     private ItemStack epochIcon(Epoch epoch, int index)
@@ -85,6 +102,7 @@ public class EpochListMenu extends Menu
             ? Msg.get("sbwgui.epoch-threshold-value", Msg.ph("n", epoch.getThreshold()))
             : Msg.get("sbwgui.epoch-threshold-final"));
         lore.add(Msg.get("sbwgui.list-epoch-blocks", Msg.ph("n", epoch.getBlocks().size())));
+        if (!epoch.getInherits().isEmpty()) {lore.add(Msg.get("sbwgui.list-epoch-inherits", Msg.ph("n", epoch.getInherits().size())));}
         lore.addAll(Msg.getList("sbwgui.list-epoch-actions"));
         return Items.named(mat, Items.flat(Msg.mm(epoch.getName())), lore);
     }
@@ -121,6 +139,7 @@ public class EpochListMenu extends Menu
             case SLOT_CLOSE -> p.closeInventory();
             case SLOT_ADD -> addEpoch(p);
             case SLOT_MODE -> toggleMode(p);
+            case SLOT_TIME -> new PhaseTimeMenu(plugin, game, arena, cfg).open(p);
             default -> {}
         }
     }

@@ -34,4 +34,12 @@ public class EpochBlock
 
     public boolean isContainer() {return Containers.isContainer(material);}
     public boolean hasContents() {return !contents.isEmpty();}
+
+    /** Глубокая копия (материал + вес + клонированный вложенный лут) — для копирования блоков между эпохами. */
+    public EpochBlock copy()
+    {
+        EpochBlock c = new EpochBlock(material, weight);
+        for (Map.Entry<Integer, ItemStack> e : contents.entrySet()) {c.contents.put(e.getKey(), e.getValue().clone());}
+        return c;
+    }
 }

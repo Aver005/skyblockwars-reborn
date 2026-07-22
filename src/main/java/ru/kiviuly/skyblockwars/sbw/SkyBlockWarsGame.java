@@ -57,7 +57,7 @@ import ru.kiviuly.skyblockwars.util.Msg;
  */
 public class SkyBlockWarsGame extends Minigame
 {
-    private static final List<String> SUBS = List.of("setcenter", "setradius", "setmaxplayers", "setmode", "epochs", "kit");
+    private static final List<String> SUBS = List.of("setcenter", "setradius", "setmaxplayers", "setmode", "settime", "epochs", "kit");
 
     /** Кэш игро-конфигов арен (ленивая загрузка, сброс на reload). */
     private final Map<String, ArenaGameConfig> configs = new HashMap<>();
@@ -116,6 +116,14 @@ public class SkyBlockWarsGame extends Minigame
     public void onReload() {configs.clear();}
 
     @Override
+    public void onArenaCreated(Arena arena)
+    {
+        // Материализуем game/<ID>.yml с дефолтами (тайминги фаз, эпохи) прямо при создании
+        // арены — чтобы значения лежали в её конфиге и правились per-arena, а не только «в памяти».
+        config(arena.getId());
+    }
+
+    @Override
     public void onArenaRemoved(String arenaId)
     {
         String id = arenaId.toUpperCase(Locale.ROOT);
@@ -166,7 +174,7 @@ public class SkyBlockWarsGame extends Minigame
         // блок возрождения — под ногами игрока (ядро уже телепортировало его на спавн)
         Location anchor = p.getLocation().getBlock().getRelative(0, -1, 0).getLocation();
         Epoch epoch = st.currentEpoch(p.getUniqueId());
-        placeRespawnBlock(s, anchor, epoch != null ? epoch.pickRandom() : null);
+        placeRespawnBlock(s, anchor, st.pick(epoch));
         pd.respawnBlock = anchor;
         pd.respawnAlive = true;
         st.setOwner(anchor, p.getUniqueId());
@@ -343,7 +351,7 @@ public class SkyBlockWarsGame extends Minigame
         damageTool(p); // ломание своего блока отменяется — прочность инструмента списываем сами
         boolean advanced = advanceProgress(s, st, p);
         Epoch epoch = st.currentEpoch(p.getUniqueId());
-        placeRespawnBlock(s, block.getLocation(), epoch != null ? epoch.pickRandom() : null);
+        placeRespawnBlock(s, block.getLocation(), st.pick(epoch));
         st.bossBar().update(st, p, s.elapsedSeconds());
         if (advanced) {p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.4f);}
     }
@@ -659,6 +667,7 @@ public class SkyBlockWarsGame extends Minigame
             case "setradius" -> {return cmdSetRadius(p, args);}
             case "setmaxplayers" -> {return cmdSetMaxPlayers(p, args);}
             case "setmode" -> {return cmdSetMode(p, args);}
+            case "settime" -> {return cmdSetTime(p, args);}
             case "epochs" -> {return cmdEpochs(p, args);}
             case "kit" -> {return cmdKit(p, args);}
             default -> {return false;}
@@ -760,6 +769,33 @@ public class SkyBlockWarsGame extends Minigame
         return true;
     }
 
+    /** /sbw settime <ID> <match|fight> <секунды|default> — длительность фазы для арены. */
+    private boolean cmdSetTime(Player p, String[] args)
+    {
+        Arena arena = setupArena(p, args, "sbw.usage-settime");
+        if (arena == null) {return true;}
+        if (args.length < 4) {Msg.send(p, "sbw.usage-settime"); return true;}
+        String which = args[2].toLowerCase(Locale.ROOT);
+        boolean match = which.equals("match");
+        if (!match && !which.equals("fight")) {Msg.send(p, "sbw.usage-settime"); return true;}
+        boolean isDefault = args[3].equalsIgnoreCase("default");
+        int seconds;
+        if (isDefault) {seconds = match ? defaultMatchSeconds() : defaultFightSeconds();}
+        else
+        {
+            try {seconds = Integer.parseInt(args[3]);}
+            catch (NumberFormatException e) {Msg.send(p, "errors.not-a-number"); return true;}
+        }
+        ArenaGameConfig cfg = config(arena.getId());
+        if (match) {cfg.setMatchSeconds(seconds);} else {cfg.setFightSeconds(seconds);}
+        saveConfig(cfg);
+        int value = match ? cfg.getMatchSeconds() : cfg.getFightSeconds();
+        Msg.send(p, "sbw.time-set", Msg.ph("arena", arena.getId()),
+            Msg.ph("phase", Msg.raw(match ? "sbw.phase-match" : "sbw.phase-fight")),
+            Msg.ph("n", value), Msg.ph("time", formatTime(value)));
+        return true;
+    }
+
     /** Пересобрать кольцо спавнов в ядровой arena.getSpawns() по центру/радиусу/максу. */
     private int regenerateSpawns(Arena arena, ArenaGameConfig cfg)
     {
@@ -794,8 +830,13 @@ public class SkyBlockWarsGame extends Minigame
                 case "setradius" -> filter(List.of("default", "20", "40", "60", "80"), args[2], out);
                 case "setmaxplayers" -> filter(List.of("4", "8", "12", "16"), args[2], out);
                 case "setmode" -> filter(List.of("personal", "shared"), args[2], out);
+                case "settime" -> filter(List.of("match", "fight"), args[2], out);
                 default -> {}
             }
+        }
+        else if (args.length == 4 && sub.equals("settime"))
+        {
+            filter(List.of("default", "300", "600", "1200", "1800"), args[3], out);
         }
         return out;
     }

@@ -5,6 +5,7 @@ import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
+import ru.kiviuly.skyblockwars.arena.Arena;
 
 /**
  * ТОЧКА РАСШИРЕНИЯ. Логика конкретной мини-игры — один наследник, зарегистрированный
@@ -98,6 +99,13 @@ public abstract class Minigame
 
     /** {@code /<cmd> reload}: перечитать игро-специфичные конфиги. */
     public void onReload() {}
+
+    /**
+     * Арена только что создана ({@code /<cmd> create}). Момент, чтобы материализовать
+     * игро-специфичный конфиг арены с дефолтами из глобального config.yml (например,
+     * тайминги фаз/эпохи), чтобы они лежали в файле арены и правились per-arena.
+     */
+    public void onArenaCreated(Arena arena) {}
 
     /** Арена удалена ({@code /<cmd> remove}): подчистить игро-специфичные данные арены. */
     public void onArenaRemoved(String arenaId) {}

@@ -13,6 +13,7 @@ import org.bukkit.Location;
 import ru.kiviuly.skyblockwars.game.GameSession;
 import ru.kiviuly.skyblockwars.sbw.ArenaGameConfig.EpochMode;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
+import ru.kiviuly.skyblockwars.sbw.epoch.EpochBlock;
 
 /**
  * Состояние матча SkyBlockWars: живёт в {@link GameSession#data()} под ключом
@@ -127,6 +128,12 @@ public class SbwState
     }
 
     public Epoch currentEpoch(UUID id) {return epochAt(epochIndexFor(id));}
+
+    /** Случайный блок эпохи с учётом наследуемых эпох (см. {@link Epoch#pickRandom(List)}). */
+    public EpochBlock pick(Epoch epoch)
+    {
+        return epoch == null ? null : epoch.pickRandom(epochs);
+    }
 
     /** Нормализованный ключ по координатам блока (без yaw/pitch/дробей). */
     private static Location key(Location loc)

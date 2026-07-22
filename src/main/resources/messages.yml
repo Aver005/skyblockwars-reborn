@@ -238,10 +238,16 @@ sbw:
   radius-set-no-center: "<yellow>Радиус арены <aqua><arena><yellow> = <yellow><radius><yellow>. Центр не задан — сделай <white>/sbw setcenter <arena></white>."
   maxplayers-set: "<green>Макс. игроков арены <aqua><arena><green> = <yellow><max><green>. Спавнов по кольцу: <yellow><n>."
   mode-set: "<green>Режим эпох арены <aqua><arena><green>: <yellow><mode><green>."
+  time-set: "<green>Длительность <yellow><phase><green> арены <aqua><arena><green> = <yellow><time> <gray>(<n> сек)."
+  phase-match: "обычной фазы"
+  phase-fight: "схватки"
+  import-empty: "<yellow>Ставящихся блоков не найдено — добавлять нечего."
+  import-look-chest: "<yellow>Посмотри на контейнер (сундук/бочку/шалкер) рядом и повтори."
   usage-setcenter: "<yellow>/sbw setcenter <ID> <gray>— центр арены = твоя позиция (спавны встанут по кольцу)."
   usage-setradius: "<yellow>/sbw setradius <ID> <число|default> <gray>— радиус кольца спавнов."
   usage-setmaxplayers: "<yellow>/sbw setmaxplayers <ID> <число> <gray>— число игроков (и точек по кольцу)."
   usage-setmode: "<yellow>/sbw setmode <ID> <personal|shared> <gray>— режим продвижения эпох."
+  usage-settime: "<yellow>/sbw settime <ID> <match|fight> <секунды|default> <gray>— длительность фазы матча."
   usage-epochs: "<yellow>/sbw epochs <ID> <gray>— GUI-редактор эпох (блоки, веса, лут, рубежи, режим)."
   usage-kit: "<yellow>/sbw kit <ID> <gray>— GUI-редактор стартового набора (что положишь — то и выдаётся)."
   kit-saved: "<green>Стартовый набор арены <aqua><arena><green> сохранён."
@@ -276,6 +282,7 @@ sbw:
     - "<gray>/sbw setradius <ID> <n|default> <gray>— радиус кольца"
     - "<gray>/sbw setmaxplayers <ID> <n> <gray>— число игроков"
     - "<gray>/sbw setmode <ID> personal|shared <gray>— режим эпох"
+    - "<gray>/sbw settime <ID> match|fight <n|default> <gray>— время фаз"
     - "<gray>/sbw epochs <ID> <gray>— GUI-редактор эпох"
     - "<gray>/sbw kit <ID> <gray>— GUI-редактор стартового набора"
 
@@ -295,10 +302,16 @@ sbwgui:
   mode-shared: "общий"
   list-epoch-num: "<dark_gray>эпоха №<n>"
   list-epoch-blocks: "<gray>Блоков: <yellow><n>"
+  list-epoch-inherits: "<gray>Наследует эпох: <yellow><n>"
   list-epoch-actions:
     - "<yellow>► ЛКМ — редактировать"
     - "<gray>ПКМ — удалить"
     - "<gray>Shift+ЛКМ вверх / Shift+ПКМ вниз — порядок"
+  list-time-name: "<gold>Время фаз"
+  list-time-match: "<gray>Обычная фаза: <yellow><time>"
+  list-time-fight: "<gray>Схватка: <yellow><time>"
+  list-time-lore:
+    - "<yellow>► Клик — настроить длительности фаз."
   epoch-title: "<dark_gray><b>Эпоха</b>"
   epoch-name-btn: "<gold>Имя эпохи"
   epoch-name-lore:
@@ -311,6 +324,40 @@ sbwgui:
   epoch-addblock-name: "<green>+ Добавить блок"
   epoch-addblock-lore:
     - "<yellow>► Клик — открыть палитру блоков."
+  epoch-frominv-name: "<green>Добавить из инвентаря"
+  epoch-frominv-lore:
+    - "<yellow>► Клик — залить блоки из твоего инвентаря."
+    - "<gray>Количество каждого блока = его вес."
+  epoch-fromchest-name: "<green>Добавить из сундука"
+  epoch-fromchest-lore:
+    - "<yellow>► Клик — залить блоки из контейнера,"
+    - "<gray>на который ты смотришь. Кол-во = вес."
+  epoch-copy-name: "<gold>Скопировать из эпохи"
+  epoch-copy-lore:
+    - "<yellow>► Клик — выбрать эпоху и скопировать её блоки сюда."
+  epoch-inherit-name: "<light_purple>Наследуемые эпохи"
+  epoch-inherit-lore:
+    - "<yellow>► Клик — выбрать эпохи, чьи блоки подмешиваются."
+    - "<gray>Блоки не копируются — берутся динамически."
+  epoch-inherit-count: "<gray>Наследует: <yellow><n>"
+  import-added: "<green>Добавлено блоков: <yellow><n><green>."
+  copy-title: "<dark_gray><b>Скопировать блоки из эпохи</b>"
+  copy-pick:
+    - "<yellow>► Клик — скопировать блоки этой эпохи сюда."
+  copy-done: "<green>Скопировано блоков: <yellow><n> <green>из эпохи <white><epoch><green>."
+  copy-empty: "<yellow>В этой эпохе нет блоков для копирования."
+  inherit-title: "<dark_gray><b>Наследуемые эпохи</b>"
+  inherit-on: "<green>✔ Включена (блоки подмешиваются)"
+  inherit-off: "<dark_gray>✘ Не включена"
+  inherit-toggle:
+    - "<yellow>► Клик — включить/выключить."
+  time-title: "<dark_gray><b>Время фаз</b>"
+  time-match-name: "<gold>Обычная фаза"
+  time-fight-name: "<gold>Схватка"
+  time-value: "<gray>Сейчас: <yellow><time> <gray>(<n> сек)"
+  time-adjust:
+    - "<dark_green>ЛКМ +10 <gray>(Shift +60)"
+    - "<yellow>ПКМ -10 <gray>(Shift -60)"
   block-click:
     - "<yellow>► Клик — настроить блок"
   block-title: "<dark_gray><b>Блок эпохи</b>"

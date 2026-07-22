@@ -91,6 +91,9 @@ public class ArenaGameConfig
             ConfigurationSection sec = es.getConfigurationSection(key);
             if (sec == null) {continue;}
             Epoch epoch = new Epoch(sec.getString("name", "Epoch"), sec.getInt("threshold", -1));
+            String id = sec.getString("id");
+            if (id != null && !id.isBlank()) {epoch.setId(id);} // старые конфиги без id получат свой на первом save
+            epoch.getInherits().addAll(sec.getStringList("inherits"));
             ConfigurationSection bs = sec.getConfigurationSection("blocks");
             if (bs != null)
             {
@@ -127,8 +130,10 @@ public class ArenaGameConfig
         {
             Epoch epoch = epochs.get(i);
             ConfigurationSection sec = es.createSection(String.valueOf(i));
+            sec.set("id", epoch.id());
             sec.set("name", epoch.getName());
             sec.set("threshold", epoch.getThreshold());
+            if (!epoch.getInherits().isEmpty()) {sec.set("inherits", new ArrayList<>(epoch.getInherits()));}
             List<EpochBlock> blocks = epoch.getBlocks();
             ConfigurationSection bs = sec.createSection("blocks");
             for (int j = 0; j < blocks.size(); j++)

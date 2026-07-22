@@ -42,6 +42,8 @@ debug-log:
 skyblockwars:
   radius-default: 40            # радиус кольца спавнов (/sbw setradius <ID> default)
   epoch-mode-default: personal  # personal = у каждого своя цепочка эпох; shared = общая на арену
+  # Тайминги фаз — ДЕФОЛТ для новых арен: значения копируются в game/<ID>.yml при создании
+  # арены и дальше правятся per-arena (/sbw settime <ID> match|fight <n|default> или GUI эпох).
   match-seconds: 1800           # длительность обычной фазы матча (30 мин), затем ломаются все блоки
   fight-seconds: 300            # схватка после слома блоков (5 мин), затем начинается разрушение арены
   destruction-rate: 0.08        # доля оставшихся поставленных блоков, исчезающих в секунду (фаза разрушения)
