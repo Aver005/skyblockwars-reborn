@@ -1,99 +1,44 @@
 package ru.kiviuly.skyblockwars;
 
-import java.sql.SQLException;
-
 import org.bukkit.plugin.java.JavaPlugin;
-import ru.kiviuly.skyblockwars.arena.ArenaManager;
-import ru.kiviuly.skyblockwars.command.MinigameCommand;
-import ru.kiviuly.skyblockwars.game.Minigame;
-import ru.kiviuly.skyblockwars.listener.ChatListener;
-import ru.kiviuly.skyblockwars.listener.GameListener;
-import ru.kiviuly.skyblockwars.listener.ProtectionListener;
-import ru.kiviuly.skyblockwars.listener.SetupListener;
-import ru.kiviuly.skyblockwars.menu.MenuListener;
+import ru.kiviuly.mg.api.MgCore;
+import ru.kiviuly.mg.api.arena.ArenaService;
+import ru.kiviuly.mg.api.util.Msg;
 import ru.kiviuly.skyblockwars.sbw.SkyBlockWarsGame;
-import ru.kiviuly.skyblockwars.stats.StatsRepository;
-import ru.kiviuly.skyblockwars.util.DebugLog;
-import ru.kiviuly.skyblockwars.util.DebugLog.Cat;
-import ru.kiviuly.skyblockwars.util.Keys;
-import ru.kiviuly.skyblockwars.util.Msg;
 
 /**
- * SkyBlockWars — платформа мини-игр (шаблон). Ядро игро-независимо: конкретная игра
- * подключается через {@link Minigame} (см. {@link #game}). Чтобы сделать свою
- * игру — замени {@code new TemplateGame(this)} на свой класс (docs/02).
+ * SkyBlockWars — тонкий игровой плагин поверх платформы MgCore. Каркас (арены, жизненный
+ * цикл матча, меню, снапшоты, откат мира, стата, HUD, i18n, тулкит) даёт mg-core; правила
+ * игры — в {@link SkyBlockWarsGame} (наследник {@code Minigame}), который здесь
+ * регистрируется в ядре через {@link MgCore#register}. Свой листенер (SbwListener) игра
+ * регистрирует сама в конструкторе.
  */
 public final class SkyBlockWarsPlugin extends JavaPlugin
 {
-    private ArenaManager arenaManager;
-    private StatsRepository statsRepository;
-    private Minigame game;
+    private MgCore core;
+    private SkyBlockWarsGame game;
 
     @Override
     public void onEnable()
     {
-        saveDefaultConfig();
-        Keys.init(this);
-        Msg.init(this);
-        DebugLog.init(this);
-
-        arenaManager = new ArenaManager(this);
-        statsRepository = new StatsRepository(this);
-        try {statsRepository.open();}
-        catch (SQLException e) {getLogger().severe("Failed to open stats.db: " + e.getMessage());}
-
-        // >>> ТОЧКА РАСШИРЕНИЯ: игра SkyBlockWars Reborn (заглушка TemplateGame оставлена как образец) <<<
-        game = new SkyBlockWarsGame(this);
-
-        var pm = getServer().getPluginManager();
-        pm.registerEvents(new MenuListener(), this);
-        pm.registerEvents(new GameListener(this), this);
-        pm.registerEvents(new ProtectionListener(this), this);
-        pm.registerEvents(new ChatListener(this), this);
-        pm.registerEvents(new SetupListener(this), this);
-
-        MinigameCommand command = new MinigameCommand(this);
-        var mg = getCommand("sbw");
-        mg.setExecutor(command);
-        mg.setTabCompleter(command);
-
-        // Загрузку арен откладываем на первый тик: миры арен (в т.ч. загружаемые ДРУГИМИ
-        // плагинами — Multiverse и т.п.) к этому моменту уже подняты. Иначе Location с
-        // ещё-не-загруженным миром роняет парсинг YAML и весь плагин при onEnable.
-        getServer().getScheduler().runTask(this, () ->
+        core = getServer().getServicesManager().load(MgCore.class);
+        if (core == null)
         {
-            arenaManager.loadAll();
-            getLogger().info("SkyBlockWars: arenas loaded: " + arenaManager.all().size());
-        });
+            getLogger().severe("MgCore не найден — SkyBlockWars выключается (нужен плагин MgCore).");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
-        getLogger().info("SkyBlockWars enabled, game: " + game.id());
-        DebugLog.log(Cat.ADMIN, "plugin enable game=%s", game.id());
+        saveDefaultConfig();
+        Msg.merge(this); // домешать свой messages.yml в общий каталог ядра (ключи sbw.*)
+
+        game = new SkyBlockWarsGame(this, core);
+        core.register(game);
+
+        getLogger().info("SkyBlockWars enabled, game registered: " + game.id());
     }
 
-    @Override
-    public void onDisable()
-    {
-        DebugLog.log(Cat.ADMIN, "plugin disable");
-        if (arenaManager != null) {arenaManager.stopAll();}
-        saveEverything();
-        if (statsRepository != null) {statsRepository.close();}
-    }
-
-    public void saveEverything()
-    {
-        if (arenaManager != null) {arenaManager.saveAll();}
-    }
-
-    public void reloadEverything()
-    {
-        reloadConfig();
-        Msg.reload();
-        DebugLog.reload();
-        arenaManager.loadAll();
-        if (game != null) {game.onReload();}
-    }
-
-    public ArenaManager arenas() {return arenaManager;}
-    public StatsRepository stats() {return statsRepository;}
-    public Minigame game() {return game;}
+    public ArenaService arenas() {return core.arenas();}
+    public MgCore core() {return core;}
+    public SkyBlockWarsGame game() {return game;}
 }

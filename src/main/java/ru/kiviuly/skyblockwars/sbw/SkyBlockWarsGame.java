@@ -30,18 +30,19 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import ru.kiviuly.mg.api.MgCore;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
-import ru.kiviuly.skyblockwars.arena.Arena;
-import ru.kiviuly.skyblockwars.game.GameSession;
-import ru.kiviuly.skyblockwars.game.MatchPlayer;
-import ru.kiviuly.skyblockwars.game.MatchResult;
-import ru.kiviuly.skyblockwars.game.Minigame;
+import ru.kiviuly.mg.api.arena.Arena;
+import ru.kiviuly.mg.api.game.Match;
+import ru.kiviuly.mg.api.game.MatchPlayer;
+import ru.kiviuly.mg.api.game.MatchResult;
+import ru.kiviuly.mg.api.game.Minigame;
 import ru.kiviuly.skyblockwars.sbw.ArenaGameConfig.EpochMode;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
 import ru.kiviuly.skyblockwars.sbw.epoch.EpochBlock;
 import ru.kiviuly.skyblockwars.sbw.menu.EpochListMenu;
 import ru.kiviuly.skyblockwars.sbw.menu.KitEditorMenu;
-import ru.kiviuly.skyblockwars.util.Msg;
+import ru.kiviuly.mg.api.util.Msg;
 
 /**
  * SkyBlockWars Reborn — арена выживания на блоках-эпохах. Каждого игрока телепортирует
@@ -51,7 +52,7 @@ import ru.kiviuly.skyblockwars.util.Msg;
  * (боссбар). Смена эпох — персонально у каждого или общая на арену (режим в конфиге).
  *
  * Точка расширения ядра: логика без состояния, состояние матча — в {@link SbwState}
- * ({@link GameSession#data()}). Игро-конфиг арены (центр/радиус/режим/эпохи) — в
+ * ({@link Match#data()}). Игро-конфиг арены (центр/радиус/режим/эпохи) — в
  * {@link ArenaGameConfig} (файл game/&lt;ID&gt;.yml); кольцо спавнов — в ядровой
  * {@code arena.getSpawns()}.
  */
@@ -62,9 +63,13 @@ public class SkyBlockWarsGame extends Minigame
     /** Кэш игро-конфигов арен (ленивая загрузка, сброс на reload). */
     private final Map<String, ArenaGameConfig> configs = new HashMap<>();
 
-    public SkyBlockWarsGame(SkyBlockWarsPlugin plugin)
+    /** Свой плагин: доступ к arenas()/config/dataFolder (база Minigame даёт лишь фасад MgCore). */
+    private final SkyBlockWarsPlugin plugin;
+
+    public SkyBlockWarsGame(SkyBlockWarsPlugin plugin, MgCore core)
     {
-        super(plugin);
+        super(core);
+        this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(new SbwListener(plugin, this), plugin);
     }
 
@@ -138,7 +143,7 @@ public class SkyBlockWarsGame extends Minigame
     public boolean allowLobbyPvp() {return plugin.getConfig().getBoolean("skyblockwars.lobby-duel", true);}
 
     @Override
-    public void onStart(GameSession s)
+    public void onStart(Match s)
     {
         announceLobbyWinner(s);
         SbwState st = ensureState(s);
@@ -153,7 +158,7 @@ public class SkyBlockWarsGame extends Minigame
      * пока не выйдет или не проиграет (умрёт без якоря). Матч кончается, когда живых 0.
      */
     @Override
-    public MatchResult checkResult(GameSession s)
+    public MatchResult checkResult(Match s)
     {
         int alive = s.aliveCount();
         if (alive == 0) {return MatchResult.draw();} // все выбыли/вышли — без победителя
@@ -167,7 +172,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     @Override
-    public void giveLoadout(GameSession s, Player p)
+    public void giveLoadout(Match s, Player p)
     {
         SbwState st = ensureState(s);
         SbwState.PlayerData pd = st.player(p.getUniqueId());
@@ -184,7 +189,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     @Override
-    public void onTick(GameSession s)
+    public void onTick(Match s)
     {
         SbwState st = SbwState.of(s);
         if (st == null) {return;}
@@ -201,7 +206,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Переход фазы матча: обычная → схватка (слом всех блоков) → разрушение арены. */
-    private void onPhaseChange(GameSession s, SbwState st, SbwState.MatchPhase to)
+    private void onPhaseChange(Match s, SbwState st, SbwState.MatchPhase to)
     {
         st.setMatchPhase(to);
         if (to == SbwState.MatchPhase.FIGHT) {enterFight(s, st);}
@@ -209,7 +214,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Начало схватки: ломаем ВСЕ блоки возрождения, отключаем респавны, даём мягкое падение. */
-    private void enterFight(GameSession s, SbwState st)
+    private void enterFight(Match s, SbwState st)
     {
         breakAllAnchors(st);
         for (Player p : s.alivePlayers())
@@ -222,7 +227,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Начало разрушения арены: поставленные игроками блоки начинают хаотично исчезать. */
-    private void enterDestruction(GameSession s, SbwState st)
+    private void enterDestruction(Match s, SbwState st)
     {
         breakAllAnchors(st); // на случай fight-seconds=0 (схватку проскочили) — гарантированно без респавнов
         for (Player p : s.alivePlayers())
@@ -246,14 +251,14 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Аварийное завершение затянувшегося разрушения: выбить всех, кроме одного — оставшийся победит. */
-    private void suddenDeath(GameSession s)
+    private void suddenDeath(Match s)
     {
         List<Player> alive = new ArrayList<>(s.alivePlayers());
         for (int i = 0; i < alive.size() - 1; i++) {s.eliminate(alive.get(i), true);}
     }
 
     /** Каждую секунду фазы разрушения убираем случайную долю оставшихся поставленных блоков. */
-    private void tickDestruction(GameSession s, SbwState st)
+    private void tickDestruction(Match s, SbwState st)
     {
         Set<Location> placed = st.placedBlocks();
         if (placed.isEmpty()) {return;}
@@ -273,7 +278,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     @Override
-    public boolean onLethalDamage(GameSession s, Player p)
+    public boolean onLethalDamage(Match s, Player p)
     {
         SbwState st = SbwState.of(s);
         if (st == null) {return true;}
@@ -288,28 +293,28 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     @Override
-    public void onPlayerEliminated(GameSession s, MatchPlayer mp)
+    public void onPlayerEliminated(Match s, MatchPlayer mp)
     {
         SbwState st = SbwState.of(s);
         if (st != null) {st.bossBar().remove(Bukkit.getPlayer(mp.getUuid()));}
     }
 
     @Override
-    public void onPlayerRemoved(GameSession s, UUID id)
+    public void onPlayerRemoved(Match s, UUID id)
     {
         SbwState st = SbwState.of(s);
         if (st != null) {st.bossBar().remove(Bukkit.getPlayer(id));}
     }
 
     @Override
-    public void onCleanup(GameSession s)
+    public void onCleanup(Match s)
     {
         SbwState st = SbwState.of(s);
         if (st != null) {st.bossBar().clearAll();} // надёжно при любом завершении (в т.ч. форс-стоп/reload)
     }
 
     @Override
-    public List<Component> scoreboardLines(GameSession s, Player viewer)
+    public List<Component> scoreboardLines(Match s, Player viewer)
     {
         SbwState st = SbwState.of(s);
         if (st == null) {return List.of();}
@@ -344,7 +349,7 @@ public class SkyBlockWarsGame extends Minigame
     // ===== ломание блоков (зовётся из SbwListener) =====
 
     /** Игрок сломал СВОЙ блок: добыча + прогресс к рубежу + рефилл случайным блоком эпохи. */
-    public void mineOwnBlock(GameSession s, SbwState st, Player p, Block block)
+    public void mineOwnBlock(Match s, SbwState st, Player p, Block block)
     {
         block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType()); // видимый «слом»: частицы + звук
         giveYield(s, p, block);
@@ -357,7 +362,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Игрок сломал ЧУЖОЙ блок возрождения: владелец теряет якорь (выбывает при след. смерти). */
-    public void destroyEnemyBlock(GameSession s, SbwState st, Player breaker, UUID owner, Block block)
+    public void destroyEnemyBlock(Match s, SbwState st, Player breaker, UUID owner, Block block)
     {
         SbwState.PlayerData od = st.peek(owner);
         if (od != null)
@@ -384,7 +389,7 @@ public class SkyBlockWarsGame extends Minigame
     // ===== лобби-дуэль (разминка без последствий) =====
 
     /** Урон в лобби: считаем нанесённый игроками урон и НЕ даём умереть (авто-хил). Из SbwListener. */
-    public void lobbyDamage(GameSession s, Player victim, EntityDamageEvent e)
+    public void lobbyDamage(Match s, Player victim, EntityDamageEvent e)
     {
         if (e.getCause() == EntityDamageEvent.DamageCause.VOID)
         {
@@ -407,7 +412,7 @@ public class SkyBlockWarsGame extends Minigame
         }
     }
 
-    private void announceLobbyWinner(GameSession s)
+    private void announceLobbyWinner(Match s)
     {
         Map<UUID, Double> tally = lobbyTally(s);
         var top = tally.entrySet().stream().max(Map.Entry.comparingByValue()).orElse(null);
@@ -420,7 +425,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     @SuppressWarnings("unchecked")
-    private Map<UUID, Double> lobbyTally(GameSession s)
+    private Map<UUID, Double> lobbyTally(Match s)
     {
         return (Map<UUID, Double>) s.data().computeIfAbsent("sbw.lobbydmg", k -> new HashMap<UUID, Double>());
     }
@@ -429,7 +434,7 @@ public class SkyBlockWarsGame extends Minigame
 
     // ===== helpers =====
 
-    private SbwState ensureState(GameSession s)
+    private SbwState ensureState(Match s)
     {
         SbwState st = SbwState.of(s);
         if (st == null)
@@ -447,7 +452,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Прогресс +1 к рубежу и при достижении — переход к следующей эпохе. true = эпоха сменилась. */
-    private boolean advanceProgress(GameSession s, SbwState st, Player p)
+    private boolean advanceProgress(Match s, SbwState st, Player p)
     {
         if (st.mode() == EpochMode.SHARED)
         {
@@ -481,7 +486,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Добыча блока в инвентарь (перелив — дропом): контейнер отдаёт свой лут, обычный блок — сам себя. */
-    private void giveYield(GameSession s, Player p, Block block)
+    private void giveYield(Match s, Player p, Block block)
     {
         if (block.getState() instanceof Container c)
         {
@@ -496,7 +501,7 @@ public class SkyBlockWarsGame extends Minigame
         }
     }
 
-    private void giveOrDrop(GameSession s, Player p, ItemStack item)
+    private void giveOrDrop(Match s, Player p, ItemStack item)
     {
         for (ItemStack rem : p.getInventory().addItem(item).values()) {dropTracked(s, p.getLocation(), rem);}
     }
@@ -522,14 +527,14 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Уронить предмет с учётом отката матча (удалится в cleanup, если не подобрали). */
-    private void dropTracked(GameSession s, Location loc, ItemStack item)
+    private void dropTracked(Match s, Location loc, ItemStack item)
     {
         if (item == null || item.getType().isAir()) {return;}
         s.trackEntity(loc.getWorld().dropItemNaturally(loc, item));
     }
 
     /** Вещи выпадают при смерти (событие смерти отменено ядром — дропаем и чистим сами). */
-    private void dropInventory(GameSession s, Player p)
+    private void dropInventory(Match s, Player p)
     {
         Location loc = p.getLocation();
         var inv = p.getInventory();
@@ -545,7 +550,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Поставить/восстановить блок возрождения (+ вложить лут, если контейнер). Помечает для отката. */
-    private void placeRespawnBlock(GameSession s, Location loc, EpochBlock pick)
+    private void placeRespawnBlock(Match s, Location loc, EpochBlock pick)
     {
         Block b = loc.getBlock();
         s.rememberBlock(b); // идемпотентно: исходный AIR уже запомнен при первой установке
@@ -562,7 +567,7 @@ public class SkyBlockWarsGame extends Minigame
         }
     }
 
-    private void respawn(GameSession s, Player p, SbwState.PlayerData pd)
+    private void respawn(Match s, Player p, SbwState.PlayerData pd)
     {
         Block anchor = pd.respawnBlock.getBlock();
         if (anchor.getType().isAir()) // якорь мог осыпаться (гравитационный блок) — восстановим опору
@@ -592,7 +597,7 @@ public class SkyBlockWarsGame extends Minigame
     }
 
     /** Выдать стартовый набор арены (из GUI-редактора) либо дефолтный, если не настроен. */
-    private void giveKit(GameSession s, Player p)
+    private void giveKit(Match s, Player p)
     {
         Map<Integer, ItemStack> kit = config(s.arena().getId()).kit();
         if (kit.isEmpty()) {giveDefaultKit(p); return;}

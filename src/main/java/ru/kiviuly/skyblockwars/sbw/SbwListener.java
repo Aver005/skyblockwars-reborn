@@ -10,8 +10,8 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
-import ru.kiviuly.skyblockwars.game.GamePhase;
-import ru.kiviuly.skyblockwars.game.GameSession;
+import ru.kiviuly.mg.api.game.GamePhase;
+import ru.kiviuly.mg.api.game.Match;
 
 /**
  * Игро-специфичные события SkyBlockWars. Пока — ломание блоков возрождения:
@@ -35,7 +35,7 @@ public class SbwListener implements Listener
     public void onBreak(BlockBreakEvent e)
     {
         Player p = e.getPlayer();
-        GameSession s = plugin.arenas().sessionOf(p);
+        Match s = plugin.arenas().sessionOf(p);
         if (s == null || s.phase() != GamePhase.RUNNING) {return;}
         SbwState st = SbwState.of(s);
         if (st == null) {return;}
@@ -57,7 +57,7 @@ public class SbwListener implements Listener
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlace(BlockPlaceEvent e)
     {
-        GameSession s = plugin.arenas().sessionOf(e.getPlayer());
+        Match s = plugin.arenas().sessionOf(e.getPlayer());
         if (s == null || s.phase() != GamePhase.RUNNING) {return;}
         SbwState st = SbwState.of(s);
         if (st != null) {st.addPlaced(e.getBlock().getLocation());}
@@ -71,7 +71,7 @@ public class SbwListener implements Listener
     public void onLobbyDamage(EntityDamageEvent e)
     {
         if (!(e.getEntity() instanceof Player victim)) {return;}
-        GameSession s = plugin.arenas().sessionOf(victim);
+        Match s = plugin.arenas().sessionOf(victim);
         if (s == null || s.phase() == GamePhase.RUNNING || s.phase() == GamePhase.ENDING) {return;}
         game.lobbyDamage(s, victim, e);
     }

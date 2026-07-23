@@ -5,11 +5,11 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
-import ru.kiviuly.skyblockwars.arena.Arena;
-import ru.kiviuly.skyblockwars.menu.Menu;
+import ru.kiviuly.mg.api.arena.Arena;
+import ru.kiviuly.mg.api.menu.Menu;
 import ru.kiviuly.skyblockwars.sbw.ArenaGameConfig;
 import ru.kiviuly.skyblockwars.sbw.SkyBlockWarsGame;
-import ru.kiviuly.skyblockwars.util.Msg;
+import ru.kiviuly.mg.api.util.Msg;
 
 /**
  * Редактор стартового набора арены: реальный инвентарь на 36 слотов — что положишь,

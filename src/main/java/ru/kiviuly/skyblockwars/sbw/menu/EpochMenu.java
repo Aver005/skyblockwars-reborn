@@ -15,15 +15,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
-import ru.kiviuly.skyblockwars.arena.Arena;
-import ru.kiviuly.skyblockwars.menu.AnvilInputMenu;
-import ru.kiviuly.skyblockwars.menu.Menu;
+import ru.kiviuly.mg.api.arena.Arena;
+import ru.kiviuly.mg.api.menu.AnvilInputMenu;
+import ru.kiviuly.mg.api.menu.Menu;
 import ru.kiviuly.skyblockwars.sbw.ArenaGameConfig;
 import ru.kiviuly.skyblockwars.sbw.SkyBlockWarsGame;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
 import ru.kiviuly.skyblockwars.sbw.epoch.EpochBlock;
-import ru.kiviuly.skyblockwars.util.Items;
-import ru.kiviuly.skyblockwars.util.Msg;
+import ru.kiviuly.mg.api.util.Items;
+import ru.kiviuly.mg.api.util.Msg;
 
 /** Редактор одной эпохи: имя (наковальня), рубеж (± кликами), сетка блоков, добавление блока. */
 public class EpochMenu extends Menu

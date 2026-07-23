@@ -10,14 +10,14 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Location;
-import ru.kiviuly.skyblockwars.game.GameSession;
+import ru.kiviuly.mg.api.game.Match;
 import ru.kiviuly.skyblockwars.sbw.ArenaGameConfig.EpochMode;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
 import ru.kiviuly.skyblockwars.sbw.epoch.EpochBlock;
 
 /**
- * Состояние матча SkyBlockWars: живёт в {@link GameSession#data()} под ключом
- * {@link #KEY} (не в полях {@link ru.kiviuly.skyblockwars.game.Minigame} — тех одна на
+ * Состояние матча SkyBlockWars: живёт в {@link Match#data()} под ключом
+ * {@link #KEY} (не в полях {@link ru.kiviuly.mg.api.game.Minigame} — тех одна на
  * все матчи). Держит режим/эпохи матча, per-player прогресс и блок возрождения,
  * общий прогресс (SHARED), карту «блок → чей якорь», фазу матча
  * (обычная → схватка → разрушение) и множество поставленных игроками блоков.
@@ -59,7 +59,7 @@ public class SbwState
         this.fightSeconds = Math.max(0, fightSeconds);
     }
 
-    public static SbwState of(GameSession s) {return (SbwState) s.data().get(KEY);}
+    public static SbwState of(Match s) {return (SbwState) s.data().get(KEY);}
 
     public EpochMode mode() {return mode;}
     public List<Epoch> epochs() {return epochs;}

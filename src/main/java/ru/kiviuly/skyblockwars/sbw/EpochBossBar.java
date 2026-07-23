@@ -10,8 +10,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.kiviuly.skyblockwars.sbw.SbwState.MatchPhase;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
-import ru.kiviuly.skyblockwars.util.Items;
-import ru.kiviuly.skyblockwars.util.Msg;
+import ru.kiviuly.mg.api.util.Items;
+import ru.kiviuly.mg.api.util.Msg;
 
 /**
  * Боссбар матча SkyBlockWars — по одному на игрока. В обычной фазе показывает эпоху и

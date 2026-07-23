@@ -7,15 +7,15 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
-import ru.kiviuly.skyblockwars.arena.Arena;
-import ru.kiviuly.skyblockwars.menu.Menu;
+import ru.kiviuly.mg.api.arena.Arena;
+import ru.kiviuly.mg.api.menu.Menu;
 import ru.kiviuly.skyblockwars.sbw.ArenaGameConfig;
 import ru.kiviuly.skyblockwars.sbw.SkyBlockWarsGame;
 import ru.kiviuly.skyblockwars.sbw.epoch.Containers;
 import ru.kiviuly.skyblockwars.sbw.epoch.Epoch;
 import ru.kiviuly.skyblockwars.sbw.epoch.EpochBlock;
-import ru.kiviuly.skyblockwars.util.Items;
-import ru.kiviuly.skyblockwars.util.Msg;
+import ru.kiviuly.mg.api.util.Items;
+import ru.kiviuly.mg.api.util.Msg;
 
 /**
  * Полный GUI-редактор лута контейнера (выбран вариант «полный редактор»): открывается

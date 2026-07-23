@@ -1,18 +1,9 @@
-﻿name: SkyBlockWars
+name: SkyBlockWars
 main: ru.kiviuly.skyblockwars.SkyBlockWarsPlugin
 version: '${version}'
 api-version: '1.21'
 author: kiviuly
 description: SkyBlockWars Reborn - block-epoch survival arena minigame.
-commands:
-  sbw:
-    description: SkyBlockWars Reborn commands
-    usage: /sbw help
-    aliases: [skyblockwars, sbwreborn]
-permissions:
-  sbw.admin:
-    description: Minigame admin commands
-    default: op
-  sbw.admin.debug:
-    description: Minigame debug/simulation commands
-    default: op
+depend: [MgCore]
+# Своих команд нет: арены/вход — через /mg (ядро), игро-подкоманды (setcenter/setradius/
+# epochs/kit/…) — через MgCore-делегирование в SkyBlockWarsGame.onCommand. Права — mg.admin.
