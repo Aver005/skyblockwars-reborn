@@ -35,6 +35,12 @@ public final class SkyBlockWarsPlugin extends JavaPlugin
         game = new SkyBlockWarsGame(this, core);
         core.register(game);
 
+        // Своя команда: обработчик привязан к SkyBlockWarsGame — видит только её арены.
+        var cmd = getCommand("sbw");
+        var handler = core.commandFor(game);
+        cmd.setExecutor(handler);
+        cmd.setTabCompleter(handler);
+
         getLogger().info("SkyBlockWars enabled, game registered: " + game.id());
     }
 

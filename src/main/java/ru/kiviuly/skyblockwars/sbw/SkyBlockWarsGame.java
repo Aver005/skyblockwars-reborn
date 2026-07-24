@@ -68,7 +68,7 @@ public class SkyBlockWarsGame extends Minigame
 
     public SkyBlockWarsGame(SkyBlockWarsPlugin plugin, MgCore core)
     {
-        super(core);
+        super(core, plugin);
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(new SbwListener(plugin, this), plugin);
     }
@@ -78,6 +78,10 @@ public class SkyBlockWarsGame extends Minigame
 
     @Override
     public String displayName() {return Msg.raw("sbw.display-name");}
+
+    /** Короткий узел прав: sbw.admin (плюс общий mg.admin из ядра). */
+    @Override
+    public String adminPermission() {return "sbw.admin";}
 
     // ===== игро-конфиг арены =====
 
@@ -699,7 +703,7 @@ public class SkyBlockWarsGame extends Minigame
     private Arena setupArena(Player p, String[] args, String usageKey)
     {
         if (args.length < 2) {Msg.send(p, usageKey); return null;}
-        Arena arena = plugin.arenas().get(args[1]);
+        Arena arena = plugin.arenas().get(id(), args[1]); // только свои арены
         if (arena == null) {Msg.send(p, "errors.arena-not-found", Msg.ph("arena", args[1])); return null;}
         if (arena.getSession() != null) {Msg.send(p, "sbw.busy", Msg.ph("arena", arena.getId())); return null;}
         return arena;
@@ -826,7 +830,7 @@ public class SkyBlockWarsGame extends Minigame
         if (!SUBS.contains(sub)) {return out;}
         if (args.length == 2)
         {
-            filter(new ArrayList<>(plugin.arenas().ids()), args[1], out);
+            filter(new ArrayList<>(plugin.arenas().ids(id())), args[1], out);
         }
         else if (args.length == 3)
         {

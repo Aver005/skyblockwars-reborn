@@ -5,5 +5,12 @@ api-version: '1.21'
 author: kiviuly
 description: SkyBlockWars Reborn - block-epoch survival arena minigame.
 depend: [MgCore]
-# Своих команд нет: арены/вход — через /mg (ядро), игро-подкоманды (setcenter/setradius/
-# epochs/kit/…) — через MgCore-делегирование в SkyBlockWarsGame.onCommand. Права — mg.admin.
+commands:
+  sbw:
+    description: SkyBlockWars commands (только арены SkyBlockWars)
+    usage: /sbw help
+    aliases: [skyblockwars]
+permissions:
+  sbw.admin:
+    description: Админ-команды SkyBlockWars (только его арены)
+    default: op
