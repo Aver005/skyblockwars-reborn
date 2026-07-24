@@ -33,6 +33,7 @@ import org.bukkit.potion.PotionEffectType;
 import ru.kiviuly.mg.api.MgCore;
 import ru.kiviuly.skyblockwars.SkyBlockWarsPlugin;
 import ru.kiviuly.mg.api.arena.Arena;
+import ru.kiviuly.mg.api.game.ExitGuardConfig;
 import ru.kiviuly.mg.api.game.Match;
 import ru.kiviuly.mg.api.game.MatchPlayer;
 import ru.kiviuly.mg.api.game.MatchResult;
@@ -82,6 +83,18 @@ public class SkyBlockWarsGame extends Minigame
     /** Короткий узел прав: sbw.admin (плюс общий mg.admin из ядра). */
     @Override
     public String adminPermission() {return "sbw.admin";}
+
+    /**
+     * Оффлайн-возврат: встроенный страж выхода — вышел из матча, на месте остаётся
+     * зомби-болванчик в твоей экипировке; вернулся вовремя — продолжаешь, болванчика
+     * убили или грейс истёк — гибель (кредит убийце, лут падает). Настройка — в config.yml.
+     */
+    @Override
+    public ExitGuardConfig exitGuard()
+    {
+        if (!plugin.getConfig().getBoolean("exit-guard.enabled", true)) {return null;}
+        return ExitGuardConfig.standard(plugin.getConfig().getInt("exit-guard.grace-seconds", 60));
+    }
 
     // ===== игро-конфиг арены =====
 
